@@ -427,4 +427,8 @@ class UI {
         document.getElementById('preloader').classList.remove('preloader');
         document.getElementById('preloader').classList.add('hide');
     }
+
+    setUserEmail(email) {
+        document.getElementById("userEmail").innerText = email;
+    }
 }

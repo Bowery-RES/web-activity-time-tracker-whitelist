@@ -157,6 +157,9 @@ document.addEventListener('DOMContentLoaded', function () {
             window.open(chrome.runtime.getURL('options.html'));
         }
     });
+    storage.getValue(STORAGE_USER_EMAIL, (email) => {
+      if (email) ui.setUserEmail(email);
+    });
 });
 
 firstInitPage();
