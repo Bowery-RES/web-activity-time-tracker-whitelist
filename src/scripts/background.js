@@ -297,30 +297,29 @@ const extractTime = (start, end) => {
     }
 }
 
-const mapTime = (length, item) => {
-    let duration = 0;
-    let startTime = null;
-    let start, end;
+const mapTime = (item) => {
     const [month, day, year] = item.day.split('/');
+    const intervalLength = item.intervals.length;
+    let start, end;
 
-    if (length === 1) {
+    if (intervalLength === 1) {
         const arr = item.intervals[0].split('-');
         start = arr[0];
         end = arr[1];
     }
-    if (length > 1) {
+    if (intervalLength > 1) {
         start = item.intervals[0].split('-')[0];
-        end = item.intervals[length - 1].split('-')[1];
+        end = item.intervals[intervalLength - 1].split('-')[1];
     }
     const { hourStart, minStart, secStart, hourEnd, minEnd, secEnd } = extractTime(start, end);
-    startTime = getStartTime({
+    const startTime = getStartTime({
         year: +year,
         month: +month,
         day: +day,
         hourStart,
         minStart,
         secStart
-    });
+    }) || null;
     duration = getDuration({
         hourEnd,
         minEnd,
@@ -328,7 +327,7 @@ const mapTime = (length, item) => {
         hourStart,
         minStart,
         secStart
-    });
+    }) || 0;
     return {duration, startTime};
 }
 
@@ -361,8 +360,7 @@ const trackUserActivity = async () => {
     let listItems = timeIntervalList || [];
     listItems = listItems.filter(item => item.day === todayLocalDate());
     const activityArray = listItems.map(item => {
-        const intervalLength = item.intervals.length;
-        const {duration, startTime} = mapTime(intervalLength, item);
+        const {duration, startTime} = mapTime(item);
         return {
             url: item.url,
             duration,
@@ -383,16 +381,8 @@ const trackUserActivity = async () => {
     }
 }
 
-const getWhiteListFromStorage = () => {
-    return new Promise((resolve, reject) => {
-        storage.getValue(STORAGE_WHITE_LIST, whiteList => {
-            resolve(whiteList || []);
-        });
-    });
-}
-
 const trackUserActivityHelper = async (lastActiveTabUrl) => {
-    const whiteList = await getWhiteListFromStorage();
+    const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
     const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.split('://')[1]));
     if (tabFromWhiteList) trackUserActivity();
 }
