@@ -1,0 +1,9 @@
+body {
+  font-family: "Segoe UI", Tahoma, sans-serif !important;
+  color: #262626;
+}
+
+#signInButton {
+  width: 100px;
+  height: 50px;
+}

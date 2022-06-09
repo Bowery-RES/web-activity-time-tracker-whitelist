@@ -6,6 +6,7 @@ var currentTab;
 var isNeedDeleteTimeIntervalFromTabs = false;
 var activity = new Activity();
 var storage = new LocalStorage();
+var authHelper = new AuthHelper();
 var deferredRestrictionsList;
 
 var setting_white_list;
@@ -243,13 +244,6 @@ function setDefaultSettings() {
     storage.saveValue(SETTINGS_DARK_MODE, SETTINGS_DARK_MODE_DEFAULT);
     storage.saveValue(SETTINGS_INTERVAL_SAVE_STORAGE, SETTINGS_INTERVAL_SAVE_STORAGE_DEFAULT);
     storage.saveValue(STORAGE_NOTIFICATION_MESSAGE, STORAGE_NOTIFICATION_MESSAGE_DEFAULT);
-    chrome.identity.getProfileUserInfo(function(info) {
-        if (info && info.email) {
-            storage.saveValue(STORAGE_USER_EMAIL, info.email)
-        } else {
-            storage.saveValue(STORAGE_USER_EMAIL, 'unknown');
-        }
-    });
     navigator.geolocation.getCurrentPosition(saveCurrentPosition, showGeolocationError);
 }
 
@@ -621,6 +615,7 @@ function checkPermissionsForNotifications(callback, ...props) {
     });
 }
 
+authHelper.runAuthProcess();
 loadPermissions();
 addListener();
 loadAddDataFromStorage();
