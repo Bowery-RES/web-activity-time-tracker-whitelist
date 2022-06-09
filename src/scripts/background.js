@@ -270,63 +270,64 @@ const getStartTime = (param) => {
     return Date.UTC(year, month - 1, day, hourStart, minStart, secStart);
 }
 
-const getMilliseconds = (hour, min, sec) => {
-    return hour * HOURS_MS + min * MIN_MS + sec * SEC_MS;
+const getMilliseconds = (hour, min, sec, ms) => {
+    return hour * HOURS_MS + min * MIN_MS + sec * SEC_MS + ms;
 }
 
 const getDuration = (param) => {
-    const {hourEnd, minEnd, secEnd, hourStart, minStart, secStart} = param;
-    const countSecEnd = getMilliseconds(hourEnd, minEnd, secEnd);
-    const countSecStart = getMilliseconds(hourStart, minStart, secStart);
+    const {hourEnd, minEnd, secEnd, msEnd, hourStart, minStart, secStart, msStart} = param;
+    const countSecEnd = getMilliseconds(hourEnd, minEnd, secEnd, msEnd);
+    const countSecStart = getMilliseconds(hourStart, minStart, secStart, msStart);
     return countSecEnd - countSecStart;
 }
 
 const extractTime = (start, end) => {
     const startArr = start.split(':');
     const endArr = end.split(':');
-    const [hourStart, minStart, secStart] = startArr;
-    const [hourEnd, minEnd, secEnd] = endArr;
+    const [hourStart, minStart, secStart, msStart] = startArr;
+    const [hourEnd, minEnd, secEnd, msEnd] = endArr;
 
     return {
         hourStart: +hourStart,
         minStart: +minStart,
         secStart: +secStart,
+        msStart: +msStart,
         hourEnd: +hourEnd,
         minEnd: +minEnd,
-        secEnd: +secEnd
+        secEnd: +secEnd,
+        msEnd: +msEnd
     }
 }
 
 const mapTime = (item) => {
-    const [month, day, year] = item.day.split('/');
     const intervalLength = item.intervals.length;
-    let start, end;
 
-    if (intervalLength === 1) {
-        const arr = item.intervals[0].split('-');
-        start = arr[0];
-        end = arr[1];
+    if (!intervalLength) {
+        return {duration: null, startTime: null};
     }
-    if (intervalLength > 1) {
-        start = item.intervals[0].split('-')[0];
-        end = item.intervals[intervalLength - 1].split('-')[1];
-    }
-    const { hourStart, minStart, secStart, hourEnd, minEnd, secEnd } = extractTime(start, end);
+
+    const [month, day, year] = item.day.split('/');
+    const lastInterval = item.intervals[intervalLength - 1];
+    const [start, end] = lastInterval.split('-');
+    const {hourStart, minStart, secStart, msStart, hourEnd, minEnd, secEnd, msEnd} = extractTime(start, end);
     const startTime = getStartTime({
         year: +year,
         month: +month,
         day: +day,
         hourStart,
         minStart,
-        secStart
+        secStart,
+        msStart
     }) || null;
     const duration = getDuration({
         hourEnd,
         minEnd,
         secEnd,
+        msEnd,
         hourStart,
         minStart,
-        secStart
+        secStart,
+        msStart
     }) || 0;
     return {duration, startTime};
 }
@@ -353,21 +354,22 @@ const getDataFromStorage = (itemName, defaultValue) => {
     });
 }
 
-const trackUserActivity = async () => {
+const trackUserActivity = async (url, actionType) => {
     const userEmail = await getDataFromStorage(STORAGE_USER_EMAIL, '');
     const latitude = await getDataFromStorage(USER_LOCATION_LAT, null);
     const longitude = await getDataFromStorage(USER_LOCATION_LONG, null);
     let listItems = timeIntervalList || [];
     listItems = listItems.filter(item => item.day === todayLocalDate());
     const activityArray = listItems.map(item => {
-        const {duration, startTime} = mapTime(item);
+        const { duration, startTime } = mapTime(item);
         return {
             url: item.url,
             duration,
-            startTime
+            startTime,
+            actionType
         };
     });
-    const filteredActivity = activityArray.filter(item => item.duration);
+    const filteredActivity = activityArray.filter(item => item.duration && url.includes(item.url.host));
     if (filteredActivity.length) {
         const requestBody =  {
             user: userEmail,
@@ -381,17 +383,17 @@ const trackUserActivity = async () => {
     }
 }
 
-const trackUserActivityHelper = async (lastActiveTabUrl = '') => {
+const trackUserActivityHelper = async (lastActiveTabUrl = '', actionType) => {
     const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
     const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.split('://')[1]));
-    if (tabFromWhiteList) trackUserActivity();
+    if (tabFromWhiteList) trackUserActivity(lastActiveTabUrl, actionType);
 }
 
 function addListener() {
     chrome.tabs.onActivated.addListener(activeInfo => {
         chrome.tabs.get(activeInfo.tabId, async (tab) => {
             activity.addTab(tab);
-            await trackUserActivityHelper(lastActiveTabUrl);
+            await trackUserActivityHelper(lastActiveTabUrl, 'tabs:onActivated');
             lastActiveTabUrl = tab.url;
             tabToUrl[activeInfo.tabId] = tab.url;
         });
@@ -406,7 +408,8 @@ function addListener() {
                 isTabInWhiteList !== -1
             ) {
                 const isLastActiveTabInWhiteList = whiteList.findIndex(item => lastActiveTabUrl.includes(item.split('://')[1]));
-                if (isLastActiveTabInWhiteList !== -1 && isLastActiveTabInWhiteList !== isTabInWhiteList) trackUserActivity();
+                if (isLastActiveTabInWhiteList !== -1 &&
+                    isLastActiveTabInWhiteList !== isTabInWhiteList) trackUserActivity(lastActiveTabUrl, 'tabs:onUpdated', );
             }
             lastActiveTabUrl = tab.url;
             tabToUrl[tabId] = tab.url;
@@ -414,15 +417,16 @@ function addListener() {
     });
 
     chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
-        if (removeInfo.isWindowClosing) return;
+        if (removeInfo.isWindowClosing) {
+            if (tabToUrl[tabId] === lastActiveTabUrl) {
+                await trackUserActivityHelper(lastActiveTabUrl, 'windows:onRemoved')
+            };
+            return;
+        };
         if (tabToUrl[tabId] !== lastActiveTabUrl) {
-            await trackUserActivityHelper(tabToUrl[tabId]);
+            await trackUserActivityHelper(tabToUrl[tabId], 'tabs:onRemoved');
         }
         delete tabToUrl[tabId];
-    });
-
-    chrome.windows.onRemoved.addListener(windowId => {
-        trackUserActivity();
     });
 
     chrome.webNavigation.onCompleted.addListener(function(details) {
