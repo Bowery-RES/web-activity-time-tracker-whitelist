@@ -39,13 +39,15 @@
                         "scripts/activity.js", 
                         "scripts/tab.js", 
                         "scripts/timeInterval.js",
+                        "scripts/authHelper.js",
+                        "scripts/url.js",
                         "scripts/background.js",
-                        "scripts/restriction.js",
-                        "scripts/url.js"],
+                        "scripts/restriction.js"
+                    ],
             "persistent": false
         },
         "browser_action": {
-            "default_popup": "index.html",
+            "default_popup": "sign-in.html",
             "default_title": "Web Activity Time Tracker",
             "default_icon": "icons/48x48.png"
         }

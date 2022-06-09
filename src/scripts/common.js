@@ -55,6 +55,9 @@ var SETTINGS_VIEW_TIME_IN_BADGE = 'view_time_in_badge';
 var SETTINGS_BLOCK_DEFERRAL = 'view_block_deferral';
 var SETTINGS_SHOW_HINT = 'show_hint';
 
+const CLIENT_ID =
+  "1015386027653-qb0c3i25f725tnovmuocllic0f4ekhnu.apps.googleusercontent.com";
+
 function isEmpty(obj) {
     for (var prop in obj) {
         if (obj.hasOwnProperty(prop))
