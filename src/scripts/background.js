@@ -228,7 +228,7 @@ function backgroundUpdateStorage() {
 const showGeolocationError = (error) => {
     storage.saveValue(USER_LOCATION_LAT, null);
     storage.saveValue(USER_LOCATION_LONG, null);
-    console.error( 'Geolocation - getCurrentPosition error:', error);
+    console.error(GEOLOCATION_ERROR_MSG, error);
 }
 
 const saveCurrentPosition = (position) => {
@@ -387,7 +387,7 @@ function addListener() {
     chrome.tabs.onActivated.addListener(activeInfo => {
         chrome.tabs.get(activeInfo.tabId, async (tab) => {
             activity.addTab(tab);
-            await trackUserActivityHelper(lastActiveTabUrl, 'tabs:onActivated');
+            await trackUserActivityHelper(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
             lastActiveTabUrl = tab.url;
             tabToUrl[activeInfo.tabId] = tab.url;
         });
@@ -403,7 +403,10 @@ function addListener() {
             ) {
                 const isLastActiveTabInWhiteList = whiteList.findIndex(item => lastActiveTabUrl.includes(item.split('://')[1]));
                 if (isLastActiveTabInWhiteList !== -1 &&
-                    isLastActiveTabInWhiteList !== isTabInWhiteList) trackUserActivity(lastActiveTabUrl, 'tabs:onUpdated', );
+                    isLastActiveTabInWhiteList !== isTabInWhiteList
+                ) {
+                    trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONUPDATED);
+                }
             }
             lastActiveTabUrl = tab.url;
             tabToUrl[tabId] = tab.url;
@@ -413,12 +416,12 @@ function addListener() {
     chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
         if (removeInfo.isWindowClosing) {
             if (tabToUrl[tabId] === lastActiveTabUrl) {
-                await trackUserActivityHelper(lastActiveTabUrl, 'windows:onRemoved')
+                await trackUserActivityHelper(lastActiveTabUrl, CHROME_EVENTS.BROWSER.ONREMOVED)
             };
             return;
         };
         if (tabToUrl[tabId] !== lastActiveTabUrl) {
-            await trackUserActivityHelper(tabToUrl[tabId], 'tabs:onRemoved');
+            await trackUserActivityHelper(tabToUrl[tabId], CHROME_EVENTS.TABS.ONREMOVED);
         }
         delete tabToUrl[tabId];
     });
