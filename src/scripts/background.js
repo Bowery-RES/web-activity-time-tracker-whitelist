@@ -322,7 +322,7 @@ const mapTime = (item) => {
         minStart,
         secStart,
         msStart
-    }) || 0;
+    }) || null;
     return {duration, startTime};
 }
 
