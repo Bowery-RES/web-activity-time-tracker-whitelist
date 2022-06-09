@@ -406,7 +406,7 @@ function addListener() {
                 isTabInWhiteList !== -1
             ) {
                 const isLastActiveTabInWhiteList = whiteList.findIndex(item => lastActiveTabUrl.includes(item.split('://')[1]));
-                if (isLastActiveTabInWhiteList !== isTabInWhiteList) trackUserActivity();
+                if (isLastActiveTabInWhiteList !== -1 && isLastActiveTabInWhiteList !== isTabInWhiteList) trackUserActivity();
             }
             lastActiveTabUrl = tab.url;
             tabToUrl[tabId] = tab.url;
