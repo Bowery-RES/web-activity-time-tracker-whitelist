@@ -6,7 +6,7 @@ var currentTab;
 var isNeedDeleteTimeIntervalFromTabs = false;
 var activity = new Activity();
 var storage = new LocalStorage();
-var auth = new Auth();
+var authHelper = new AuthHelper();
 var deferredRestrictionsList;
 
 var setting_white_list;
@@ -441,7 +441,7 @@ function checkPermissionsForNotifications(callback, ...props) {
     });
 }
 
-auth.runAuthProcess();
+authHelper.runAuthProcess();
 loadPermissions();
 addListener();
 loadAddDataFromStorage();

@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     .getElementById("signInButton")
     .addEventListener("click", function () {
       chrome.runtime.getBackgroundPage(function (bg) {
-        bg.auth.runAuthProcess();
+        bg.authHelper.runAuthProcess();
         window.close();
       });
     });

@@ -39,7 +39,7 @@
                         "scripts/activity.js", 
                         "scripts/tab.js", 
                         "scripts/timeInterval.js",
-                        "scripts/auth.js",
+                        "scripts/authHelper.js",
                         "scripts/url.js",
                         "scripts/background.js",
                         "scripts/restriction.js"
