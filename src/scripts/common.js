@@ -63,6 +63,7 @@ const USER_LOCATION_LAT = 'latitude';
 const USER_LOCATION_LONG = 'longitude';
 
 const TRACK_USER_ACTIVITY_URL = 'https://bl3ky3ae7i.execute-api.us-east-1.amazonaws.com/prod/user-activity';
+const EMPTY_TAB_URL = 'chrome://newtab/';
 
 function isEmpty(obj) {
     for (var prop in obj) {

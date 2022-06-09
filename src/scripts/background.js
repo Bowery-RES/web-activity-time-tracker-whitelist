@@ -320,7 +320,7 @@ const mapTime = (item) => {
         minStart,
         secStart
     }) || null;
-    duration = getDuration({
+    const duration = getDuration({
         hourEnd,
         minEnd,
         secEnd,
@@ -381,7 +381,7 @@ const trackUserActivity = async () => {
     }
 }
 
-const trackUserActivityHelper = async (lastActiveTabUrl) => {
+const trackUserActivityHelper = async (lastActiveTabUrl = '') => {
     const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
     const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.split('://')[1]));
     if (tabFromWhiteList) trackUserActivity();
@@ -399,8 +399,14 @@ function addListener() {
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
-            if (lastActiveTabUrl !== tab.url) {
-                await trackUserActivityHelper(lastActiveTabUrl);
+            const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
+            const isTabInWhiteList = whiteList.findIndex(item => tab.url.includes(item.split('://')[1]));
+            if (lastActiveTabUrl !== tab.url &&
+                lastActiveTabUrl !== EMPTY_TAB_URL &&
+                isTabInWhiteList !== -1
+            ) {
+                const isLastActiveTabInWhiteList = whiteList.findIndex(item => lastActiveTabUrl.includes(item.split('://')[1]));
+                if (isLastActiveTabInWhiteList !== isTabInWhiteList) trackUserActivity();
             }
             lastActiveTabUrl = tab.url;
             tabToUrl[tabId] = tab.url;
@@ -408,10 +414,8 @@ function addListener() {
     });
 
     chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
-        if (removeInfo.isWindowClosing) {
-            return;
-        }
-        if ( tabToUrl[tabId] !== lastActiveTabUrl) {
+        if (removeInfo.isWindowClosing) return;
+        if (tabToUrl[tabId] !== lastActiveTabUrl) {
             await trackUserActivityHelper(tabToUrl[tabId]);
         }
         delete tabToUrl[tabId];
