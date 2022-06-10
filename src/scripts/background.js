@@ -260,8 +260,8 @@ function setDefaultValueForNewSettings() {
 }
 
 const getStartTime = (param) => {
-    const {year, month, day, hourStart, minStart, secStart} = param;
-    return Date.UTC(year, month - 1, day, hourStart, minStart, secStart);
+    const {year, month, day, hourStart, minStart, secStart, msStart} = param;
+    return Date.UTC(year, month - 1, day, hourStart, minStart, secStart, msStart);
 }
 
 const getMilliseconds = (hour, min, sec, ms) => {
