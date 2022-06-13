@@ -191,38 +191,11 @@ function executeScriptNetflix(callback, activeUrl, tab, activeTab) {
     });
 }
 
-async function sendIntervalEvent(intervalList) {
-    storage.getValue(STORAGE_USER_EMAIL, async function(email) {
-        const userEmail = email
-        const requestPayload = {
-            user: userEmail,
-            intervals: intervalList,
-        }
-        const settings = {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            }
-        };
-        try {
-            // change this to the real URL
-            const requestURL = 'https://jsonplaceholder.typicode.com/posts';
-            const fetchResponse = await fetch(requestURL, settings);
-            const data = await fetchResponse.json();
-            console.warn('got back', data)
-        } catch (e) {
-            return e;
-        }
-    });
-}
-
 function backgroundUpdateStorage() {
     if (tabs != undefined && tabs.length > 0)
         storage.saveTabs(tabs);
     if (timeIntervalList != undefined && timeIntervalList.length > 0)
         storage.saveValue(STORAGE_TIMEINTERVAL_LIST, timeIntervalList);
-    sendIntervalEvent(timeIntervalList);
 }
 
 const showGeolocationError = (error) => {
