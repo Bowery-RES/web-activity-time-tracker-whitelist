@@ -28,7 +28,6 @@ class AuthHelper {
         this._saveIdTokenData(id_token, expires_in);
       }
     } else {
-      console.log("code");
       const code = await this._getAuthCode();
       const { id_token, expires_in, refresh_token } =
         await this._getIdAndRefreshTokens(code);
