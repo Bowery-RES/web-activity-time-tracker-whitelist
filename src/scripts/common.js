@@ -34,6 +34,9 @@ var STORAGE_NOTIFICATION_LIST = 'notification_list';
 var STORAGE_NOTIFICATION_MESSAGE = 'notification_message';
 var STORAGE_TIMEINTERVAL_LIST = 'time_interval';
 var STORAGE_USER_EMAIL = 'user_email';
+var STORAGE_ID_TOKEN = 'id_token';
+var STORAGE_ID_TOKEN_EXPIRATION_DATE = 'id_token_expiration_date';
+var STORAGE_REFRESH_TOKEN = 'refresh_token';
 
 var DEFERRED_TIMEOUT = 300000;
 
@@ -57,6 +60,7 @@ var SETTINGS_SHOW_HINT = 'show_hint';
 
 const CLIENT_ID =
   "1015386027653-qb0c3i25f725tnovmuocllic0f4ekhnu.apps.googleusercontent.com";
+const CLIENT_SECRET = "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"
 
 function isEmpty(obj) {
     for (var prop in obj) {

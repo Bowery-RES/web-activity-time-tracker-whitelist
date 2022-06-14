@@ -16,6 +16,7 @@
             "48": "icons/48x48.png",
             "128": "icons/128x128.png"
         },
+        "key": "MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCG4jPpsmlOfohrwdtC6n3q7+R+2OiB+vN3wLHYKYD/2q+FS85XgEmVzR1p1DTUFK1mreRqL1Ao4pmG//nit+8bdM8PapRlujFLUvs1Hl6CdaJj9zMkaBdlL9gtAmUXKB3qbUKt26qymtTCa1BhAVG95qwL9r4fsBIfw7w7mfyyZ7LW93jMv2POrobe7mXAYWliRlhqYMF9LPTQEnyFBNlWbndKMemusScX9Rx3LqueDosyW/sU+34DotdvXlbw970OKk0JaiblAU0110QHi7rnx6GuZ0D5k8dsn3XuuU8tqUYlCuQw+zwW9XlgkuMwJmkjgM3T7B9IH8AqOaiACjmvAgMBAAECggEAQn7/4sVO/yCINr+CTdH2s70CY7qhnXrPTolT4+JKM1hnUYqWtjKLlGtjhcnVJXzwI3+07NhYZ1+XGqPVWH0fRuTmM45yjFgndx/4si4/n4dIwImcz+T1K7BTnZThq3HelbS5u6Zg195W52YqYThaSQmQZfGFt2+A7+H6SVPX7UdU+ek4hM77Ftq5yTPcVOLKzCDIyDDGUkG1LKXNZ7vZRHJVWDfeu73yD2mu2n8CMdqpzXdF1OA4+7EOS2ZrwDn6vzYDb2uvUw+rnaCPRv6FYCapDQ8luiDbA2YtkDQvAYiTq0xNYm4x9nH52Lt58avGPLM5fWeXujg55mDDk2JbOQKBgQC8VnU9jF7IAt9m3DdWSs2oHCxj/+Plomoba9bEZ13auCWzIf3flnzx0PfUCZ+p28/W0+GxAJFOdSY88vQmhKddpt9yZqIl3ZAnoxm1NTn/R01/5PYkL5GKSIIl9z+htQ1SaCFDaJZGXGXd8eoSY8T606xqnacUui7aEkaObtYInQKBgQC3V4joVPl4JlAI/lICBecMmFvCkcqv6yWMdaY36NcbI/j2Z0fNDhiar+wUM+ycB7oltqpf6mt8gJSoxr9PW/Q/GRDROiymcyNZPWs/3A8PzwDmp/aqIEhyn2L52egnNbjvQxzrWE3aFCDp6KejOKY9POeZuoEPhBu7c9VDKED7uwKBgGM4MR+xuaUpTkREM6r0UZAE96XfA1LQ05GKqGRkCF/Xr5TFjZejEkPa0RUV1NWJhd8pVLcJE4P/15s4a0N3kyyVYxZD15yXMwCOvlZmqh1AlSWRm9LIdKYjON2DejRYy6HkVdHLYY/D0a6xaZ0yjm2N4kFwuLsEsvYTtrQG1B9JAoGAMKp3mNQVdCMXU4vOUOMoNVur37W7S37rdKE2Adk4X+foid9YW8HGHilcTPCLec9DRgd6qgMbjOzEiRhYZ8RMzQLmR+NdPsGJPILlGQpcpSGZZ6BmBTqUgHh2WUPSL7Y+5KO35XCHGcAGDJDJDrZWyiKEh3XOFERI6DUTAsSIm0kCgYEAus+vEG90iKirYCA8smdoxiUBnSu0PbUUouoxP9Hjtlelw189z07r6yzyIhzVIlKtXgX++Gl+TTazbK3ZFWcpC0JnoFpvGrnHrESohU6+hHZIxG3HPGWK4nyb0E2pTkhbFNEa2OQmUS+tVMB0awcgYyads/j6xYQLir0YcI+Axfw=",
         "permissions": [
             "tabs",
             "activeTab",
@@ -25,7 +26,8 @@
             "webNavigation",
             "unlimitedStorage",
             "identity",
-            "identity.email"
+            "identity.email",
+            "*://*.googleapis.com/*"
         ],
         "optional_permissions": [
             "https://www.youtube.com/*",
