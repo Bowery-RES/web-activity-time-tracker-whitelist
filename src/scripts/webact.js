@@ -20,7 +20,7 @@ var initialWhiteList = [
     "https://zola.planning.nyc.gov/",
     "http://tax1.co.monmouth.nj.us/",
     "https://www.trulia.com/",
-    "https://www.reis.com/",
+    "https://cre.moodysanalytics.com/",
     "http://www.loopnet.com/",
     "https://www.apartments.com/",
     "https://www.rent.com/",
@@ -33,12 +33,12 @@ var initialWhiteList = [
     "https://zoneomics.com/",
     "https://landgrid.com/",
     "https://msc.fema.gov/portal/home",
-    "https://mls2.gsmls.com/",
+    "https://mls.gsmls.com/member/login.do",
     "http://idp.hudson.safemls.net/",
-    "http://www.njactb.org/",
+    "https://njactb.org/",
     "https://www.hgar.com",
     "https://www.bouldergroup.com/research.html",
-    "https://www.netleaseadvisor.com/",
+    "https://netleaseadvisor.com/",
     "https://lrv.nassuacountyny.gov",
     "https://www.nj.gov/dca/hmfa/developers/credits/compliance/limits.shtml",
     "https://www.state.nj.us/treasury/taxation/lpt/chapter123.shtml",
@@ -223,13 +223,13 @@ function fillEmptyBlock() {
 function getTabsFromStorage(tabs) {
     tabsFromStorage = tabs;
     targetTabs = [];
-  
+
     ui.clearUI();
     if (tabs === null) {
       ui.fillEmptyBlock("chart");
       return;
     }
-  
+
     var counterOfSite;
     if (currentTypeOfList === TypeListEnum.All) {
         targetTabs = tabs;
@@ -240,7 +240,7 @@ function getTabsFromStorage(tabs) {
         ui.fillEmptyBlock("chart");
         return;
       }
-  
+
       counterOfSite = tabs.length;
     }
     if (currentTypeOfList === TypeListEnum.ToDay) {
@@ -255,7 +255,7 @@ function getTabsFromStorage(tabs) {
             a.days.find((s) => s.date === todayLocalDate()).summary
           );
         });
-  
+
         totalTime = getTotalTime(targetTabs, currentTypeOfList);
         stat.todayTime = totalTime;
       } else {
@@ -263,7 +263,7 @@ function getTabsFromStorage(tabs) {
         return;
       }
     }
-  
+
     if (currentTypeOfList === TypeListEnum.All)
       ui.addTableHeader(
         currentTypeOfList,
@@ -273,25 +273,25 @@ function getTabsFromStorage(tabs) {
       );
     if (currentTypeOfList === TypeListEnum.ToDay)
       ui.addTableHeader(currentTypeOfList, counterOfSite, totalTime);
-  
+
     var currentTab = getCurrentTab();
-  
+
     var tabsForChart = [];
     var summaryCounter = 0;
     var tabGroups = getTabGroups(targetTabs, currentTypeOfList);
-  
+
     for (var i = 0; i < tabGroups.length; i++) {
       var summaryTime = 0;
       var counter = 0;
       var tabGroup = tabGroups[i];
-  
+
       summaryTime = tabGroup.summaryTime;
       counter = tabGroup.counter;
-  
+
       summaryCounter += counter;
-  
+
       const targetTab = tabGroup.tabs.find(t => t.url.isMatch(currentTab)) || tabGroup.tabs[0];
-  
+
       if (
         currentTypeOfList === TypeListEnum.ToDay ||
         (currentTypeOfList === TypeListEnum.All && i <= 30)
@@ -304,18 +304,18 @@ function getTabsFromStorage(tabs) {
           counter
         );
       else ui.addExpander();
-  
+
       var tabForChartUrl = i <= 8 ? tabGroup.host : 'Others';
       addTabForChart(tabsForChart, tabForChartUrl, summaryTime, counter);
     }
-  
+
     ui.addHrAfterTableOfSite();
     ui.createTotalBlock(totalTime, currentTypeOfList, summaryCounter);
     ui.drawChart(tabsForChart);
     ui.setActiveTooltip(currentTab);
-  
+
     ui.removePreloader();
-  }  
+  }
 
 function getTabsForTimeChart(timeIntervals) {
     var resultArr = [];
@@ -347,7 +347,7 @@ function getTabGroups(tabs, typeOfList, date) {
             tabs: groupedTabs
         });
     }
-    
+
     result.sort(function (a, b) {
         return b.summaryTime - a.summaryTime;
     });
@@ -390,7 +390,7 @@ function getTabsFromStorageForExpander(tabs) {
     targetTabs = [];
 
     var currentTab = getCurrentTab();
-  
+
     var tabGroups = getTabGroups(tabs, currentTypeOfList);
 
     for (var i = 31; i < tabGroups.length; i++) {
@@ -414,10 +414,10 @@ function getTotalCount(tabs, typeofList, date) {
     } else if (typeofList === TypeListEnum.All) {
         total = tabs.reduce((tot, tab) => tot + tab.counter, 0);
     }
-  
+
     return total;
 }
-  
+
 
 function getTotalTime(tabs, typeOfList, date) {
     var total;
@@ -432,7 +432,7 @@ function getTotalTime(tabs, typeOfList, date) {
             var summaryTimeList = tabs.map(function (a) { return a.summaryTime; });
             total = summaryTimeList.reduce(function (a, b) { return a + b; })
             break;
-        default:               
+        default:
     }
 
     return total;
@@ -527,7 +527,7 @@ function setStatData(array) {
     stat.inActiveDayTime = arrayAscByTime[0].total;
     stat.activeDayTime = arrayAscByTime[arrayAscByTime.length - 1].total;
 
-    //exclude current day from summary statistics 
+    //exclude current day from summary statistics
     if (arrayAscByTimeWithoutCurrentDay.length > 0) {
         stat.inActiveDayWithoutCurrentDay = new Date(arrayAscByTimeWithoutCurrentDay[0].date).toLocaleDateString();
         stat.activeDayWithoutCurrentDay = new Date(arrayAscByTimeWithoutCurrentDay[arrayAscByTimeWithoutCurrentDay.length - 1].date).toLocaleDateString();
