@@ -11,18 +11,18 @@ class TimeInterval {
 
     addInterval() {
         var date = new Date();
-        var stringDate = date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-        this.intervals.push(stringDate + '-' + stringDate);
+        var stringDate = `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}:${date.getMilliseconds()}`;
+        this.intervals.push(`${stringDate}-${stringDate}`);
     }
 
     closeInterval() {
         var today = new Date();
-        var stringDate = today.getHours() + ':' + today.getMinutes() + ':' + today.getSeconds();
+        var stringDate = `${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}:${today.getMilliseconds()}`;
         var currentInterval = this.intervals[this.intervals.length - 1];
         if (currentInterval != undefined) {
             if (currentInterval.split('-')[0] == currentInterval.split('-')[1]) {
                 this.intervals.pop();
-                this.intervals.push(currentInterval.split('-')[0] + '-' + stringDate);
+                this.intervals.push(`${currentInterval.split('-')[0]}-${stringDate}`);
             }
         }
     }

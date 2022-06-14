@@ -23,6 +23,9 @@ var isHasPermissioForYouTube;
 var isHasPermissioForNetflix;
 var isHasPermissioForNotification;
 
+let lastActiveTabUrl = '';
+let tabToUrl = {};
+
 function updateSummaryTime() {
     setInterval(backgroundCheck, SETTINGS_INTERVAL_CHECK_DEFAULT);
 }
@@ -33,7 +36,7 @@ function updateStorage() {
 
 function backgroundCheck() {
     chrome.windows.getLastFocused({ populate: true }, function(currentWindow) {
-        if (currentWindow.focused) {
+        if (currentWindow && currentWindow.focused) {
             var activeTab = currentWindow.tabs.find(t => t.active === true);
             if (activeTab !== undefined && activity.isValidPage(activeTab)) {
                 var activeUrl = new Url(activeTab.url);
@@ -188,38 +191,22 @@ function executeScriptNetflix(callback, activeUrl, tab, activeTab) {
     });
 }
 
-async function sendIntervalEvent(intervalList) {
-    storage.getValue(STORAGE_USER_EMAIL, async function(email) {
-        const userEmail = email
-        const requestPayload = {
-            user: userEmail,
-            intervals: intervalList,
-        }
-        const settings = {
-            method: 'POST',
-            headers: {
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-            }
-        };
-        try {
-            // change this to the real URL
-            const requestURL = 'https://jsonplaceholder.typicode.com/posts';
-            const fetchResponse = await fetch(requestURL, settings);
-            const data = await fetchResponse.json();
-            console.warn('got back', data)
-        } catch (e) {
-            return e;
-        }
-    });
-}
-
 function backgroundUpdateStorage() {
     if (tabs != undefined && tabs.length > 0)
         storage.saveTabs(tabs);
     if (timeIntervalList != undefined && timeIntervalList.length > 0)
         storage.saveValue(STORAGE_TIMEINTERVAL_LIST, timeIntervalList);
-    sendIntervalEvent(timeIntervalList);
+}
+
+const showGeolocationError = (error) => {
+    storage.saveValue(USER_LOCATION_LAT, null);
+    storage.saveValue(USER_LOCATION_LONG, null);
+    console.error(GEOLOCATION_ERROR_MSG, error);
+}
+
+const saveCurrentPosition = (position) => {
+    storage.saveValue(USER_LOCATION_LAT, position.coords.latitude);
+    storage.saveValue(USER_LOCATION_LONG, position.coords.longitude);
 }
 
 function setDefaultSettings() {
@@ -230,6 +217,7 @@ function setDefaultSettings() {
     storage.saveValue(SETTINGS_DARK_MODE, SETTINGS_DARK_MODE_DEFAULT);
     storage.saveValue(SETTINGS_INTERVAL_SAVE_STORAGE, SETTINGS_INTERVAL_SAVE_STORAGE_DEFAULT);
     storage.saveValue(STORAGE_NOTIFICATION_MESSAGE, STORAGE_NOTIFICATION_MESSAGE_DEFAULT);
+    navigator.geolocation.getCurrentPosition(saveCurrentPosition, showGeolocationError);
 }
 
 function checkSettingsImEmpty() {
@@ -244,11 +232,171 @@ function setDefaultValueForNewSettings() {
     loadNotificationMessage();
 }
 
-function addListener() {
-    chrome.tabs.onActivated.addListener(function(info) {
-        chrome.tabs.get(info.tabId, function(tab) {
-            activity.addTab(tab);
+const getStartTime = (param) => {
+    const {year, month, day, hourStart, minStart, secStart, msStart} = param;
+    return Date.UTC(year, month - 1, day, hourStart, minStart, secStart, msStart);
+}
+
+const getMilliseconds = (hour, min, sec, ms) => {
+    return hour * HOURS_MS + min * MIN_MS + sec * SEC_MS + ms;
+}
+
+const getDuration = (param) => {
+    const {hourEnd, minEnd, secEnd, msEnd, hourStart, minStart, secStart, msStart} = param;
+    const countSecEnd = getMilliseconds(hourEnd, minEnd, secEnd, msEnd);
+    const countSecStart = getMilliseconds(hourStart, minStart, secStart, msStart);
+    return countSecEnd - countSecStart;
+}
+
+const extractTime = (start, end) => {
+    const startArr = start.split(':');
+    const endArr = end.split(':');
+    const [hourStart, minStart, secStart, msStart] = startArr;
+    const [hourEnd, minEnd, secEnd, msEnd] = endArr;
+
+    return {
+        hourStart: +hourStart,
+        minStart: +minStart,
+        secStart: +secStart,
+        msStart: +msStart,
+        hourEnd: +hourEnd,
+        minEnd: +minEnd,
+        secEnd: +secEnd,
+        msEnd: +msEnd
+    }
+}
+
+const mapTime = (item) => {
+    const intervalLength = item.intervals.length;
+
+    if (!intervalLength) {
+        return {duration: null, startTime: null};
+    }
+
+    const [month, day, year] = item.day.split('/');
+    const lastInterval = item.intervals[intervalLength - 1];
+    const [start, end] = lastInterval.split('-');
+    const {hourStart, minStart, secStart, msStart, hourEnd, minEnd, secEnd, msEnd} = extractTime(start, end);
+    const startTime = getStartTime({
+        year: +year,
+        month: +month,
+        day: +day,
+        hourStart,
+        minStart,
+        secStart,
+        msStart
+    }) || null;
+    const duration = getDuration({
+        hourEnd,
+        minEnd,
+        secEnd,
+        msEnd,
+        hourStart,
+        minStart,
+        secStart,
+        msStart
+    }) || null;
+    return {duration, startTime};
+}
+
+const postUserActivity = async (requestBody) => {
+    try {
+        await fetch(TRACK_USER_ACTIVITY_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
         });
+    } catch(error) {
+        console.error(error);
+    }
+}
+
+const getDataFromStorage = (itemName, defaultValue) => {
+    return new Promise((resolve, reject) => {
+        storage.getValue(itemName, result => {
+            resolve(result || defaultValue);
+        });
+    });
+}
+
+const trackUserActivity = async (url, actionType) => {
+    const userEmail = await getDataFromStorage(STORAGE_USER_EMAIL, '');
+    const latitude = await getDataFromStorage(USER_LOCATION_LAT, null);
+    const longitude = await getDataFromStorage(USER_LOCATION_LONG, null);
+    let listItems = timeIntervalList || [];
+    listItems = listItems.filter(item => item.day === todayLocalDate());
+    const activityArray = listItems.map(item => {
+        const { duration, startTime } = mapTime(item);
+        return {
+            url: item.url,
+            duration,
+            startTime,
+            actionType
+        };
+    });
+    const filteredActivity = activityArray.filter(item => item.duration && url.includes(item.url.host));
+    if (filteredActivity.length) {
+        const requestBody =  {
+            user: userEmail,
+            location: {
+                latitude,
+                longitude
+            },
+            activity: filteredActivity
+        };
+        postUserActivity(requestBody);
+    }
+}
+
+const trackUserActivityHelper = async (lastActiveTabUrl = '', actionType) => {
+    const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
+    const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.split('://')[1]));
+    if (tabFromWhiteList) trackUserActivity(lastActiveTabUrl, actionType);
+}
+
+function addListener() {
+    chrome.tabs.onActivated.addListener(activeInfo => {
+        chrome.tabs.get(activeInfo.tabId, async (tab) => {
+            activity.addTab(tab);
+            await trackUserActivityHelper(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
+            lastActiveTabUrl = tab.url;
+            tabToUrl[activeInfo.tabId] = tab.url;
+        });
+    });
+
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+        if (changeInfo.status === 'complete') {
+            const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
+            const isTabInWhiteList = whiteList.findIndex(item => tab.url.includes(item.split('://')[1]));
+            if (lastActiveTabUrl !== tab.url &&
+                lastActiveTabUrl !== EMPTY_TAB_URL &&
+                isTabInWhiteList !== -1
+            ) {
+                const isLastActiveTabInWhiteList = whiteList.findIndex(item => lastActiveTabUrl.includes(item.split('://')[1]));
+                if (isLastActiveTabInWhiteList !== -1 &&
+                    isLastActiveTabInWhiteList !== isTabInWhiteList
+                ) {
+                    trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONUPDATED);
+                }
+            }
+            lastActiveTabUrl = tab.url;
+            tabToUrl[tabId] = tab.url;
+        }
+    });
+
+    chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
+        if (removeInfo.isWindowClosing) {
+            if (tabToUrl[tabId] === lastActiveTabUrl) {
+                await trackUserActivityHelper(lastActiveTabUrl, CHROME_EVENTS.BROWSER.ONREMOVED)
+            };
+            return;
+        };
+        if (tabToUrl[tabId] !== lastActiveTabUrl) {
+            await trackUserActivityHelper(tabToUrl[tabId], CHROME_EVENTS.TABS.ONREMOVED);
+        }
+        delete tabToUrl[tabId];
     });
 
     chrome.webNavigation.onCompleted.addListener(function(details) {
@@ -256,6 +404,7 @@ function addListener() {
             activity.updateFavicon(tab);
         });
     });
+
     chrome.runtime.onInstalled.addListener(function(details) {
         if (details.reason == 'install') {
             storage.saveValue(SETTINGS_SHOW_HINT, SETTINGS_SHOW_HINT_DEFAULT);
@@ -268,6 +417,7 @@ function addListener() {
             isNeedDeleteTimeIntervalFromTabs = true;
         }
     });
+
     chrome.storage.onChanged.addListener(function(changes, namespace) {
         for (var key in changes) {
             if (key === STORAGE_WHITE_LIST) {
@@ -354,7 +504,7 @@ function loadRestrictionList() {
     storage.getValue(STORAGE_RESTRICTION_LIST, function(items) {
         setting_restriction_list = [];
         items = items || [];
-      
+
         for (var i = 0; i < items.length; i++) {
             setting_restriction_list.push(new Restriction(items[i].url || items[i].domain, items[i].time));
         }

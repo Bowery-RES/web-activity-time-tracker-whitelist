@@ -58,9 +58,30 @@ var SETTINGS_VIEW_TIME_IN_BADGE = 'view_time_in_badge';
 var SETTINGS_BLOCK_DEFERRAL = 'view_block_deferral';
 var SETTINGS_SHOW_HINT = 'show_hint';
 
-const CLIENT_ID =
-  "1015386027653-qb0c3i25f725tnovmuocllic0f4ekhnu.apps.googleusercontent.com";
 const CLIENT_SECRET = "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"
+const HOURS_MS = 3600000;
+const MIN_MS = 60000;
+const SEC_MS = 1000;
+
+const USER_LOCATION_LAT = 'latitude';
+const USER_LOCATION_LONG = 'longitude';
+
+const TRACK_USER_ACTIVITY_URL = 'https://bl3ky3ae7i.execute-api.us-east-1.amazonaws.com/prod/user-activity';
+const EMPTY_TAB_URL = 'chrome://newtab/';
+
+const GEOLOCATION_ERROR_MSG = 'Geolocation - getCurrentPosition error';
+
+const CHROME_EVENTS = {
+    TABS: {
+        ONACTIVATED: 'tabs:onActivated',
+        ONUPDATED: 'tabs:onUpdated',
+        ONREMOVED: 'tabs:onRemoved'
+    },
+    BROWSER: {
+        ONREMOVED: 'windows:onRemoved'
+    }
+}
+const CLIENT_ID = '1015386027653-qb0c3i25f725tnovmuocllic0f4ekhnu.apps.googleusercontent.com';
 
 function isEmpty(obj) {
     for (var prop in obj) {
