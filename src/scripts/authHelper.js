@@ -1,19 +1,14 @@
 "use strict";
 
 class AuthHelper {
-  _validateDomain(email) {
-    if (email) {
-      return email.includes("@boweryvaluation.com");
-    } else {
-      return false;
-    }
-  }
-
-  _validateTokens(refreshToken, idToken, idTokenExpirationDate) {
-    return refreshToken && idToken && idTokenExpirationDate;
+  constructor() {
+    this._authAttempts = 0;
   }
 
   async runAuthProcess() {
+    this._authAttempts++;
+    if (this._authAttempts > 3) return;
+
     const [refreshToken, idToken, idTokenExpirationDate] = await Promise.all([
       storage.getValuePromise(STORAGE_REFRESH_TOKEN),
       storage.getValuePromise(STORAGE_ID_TOKEN),
@@ -21,11 +16,16 @@ class AuthHelper {
     ]);
 
     if (this._validateTokens(refreshToken, idToken, idTokenExpirationDate)) {
-      if (idTokenExpirationDate < Date.now()) {
+      if (idTokenExpirationDate > Date.now()) {
+        this._authAttempts = 0;
+        chrome.browserAction.setPopup({ popup: "../index.html" });
+      } else {
         const { id_token, expires_in } = await this._getRefreshedIdToken(
           refreshToken
         );
         this._saveIdTokenData(id_token, expires_in);
+
+        this.runAuthProcess();
       }
     } else {
       const code = await this._getAuthCode();
@@ -36,10 +36,8 @@ class AuthHelper {
       if (refresh_token) {
         storage.saveValue(STORAGE_REFRESH_TOKEN, refresh_token);
       }
-    }
 
-    if (await storage.getValuePromise(STORAGE_USER_EMAIL)) {
-      chrome.browserAction.setPopup({ popup: "../index.html" });
+      this.runAuthProcess();
     }
   }
 
@@ -56,6 +54,10 @@ class AuthHelper {
         Date.now() + expires_in * 1000
       );
     }
+  }
+
+  _validateTokens(refreshToken, idToken, idTokenExpirationDate) {
+    return refreshToken && idToken && idTokenExpirationDate;
   }
 
   _parseIdToken(jwt) {
@@ -77,6 +79,7 @@ class AuthHelper {
       authUrl.searchParams.set("redirect_uri", redirectUri);
       authUrl.searchParams.set("scope", "openid profile email");
       authUrl.searchParams.set("nonce", nonce);
+      authUrl.searchParams.set("prompt", "consent");
       authUrl.searchParams.set("access_type", "offline");
 
       return chrome.identity.launchWebAuthFlow(

@@ -301,14 +301,20 @@ const mapTime = (item) => {
 
 const postUserActivity = async (requestBody) => {
     try {
+        const idToken = await storage.getValuePromise(STORAGE_ID_TOKEN);
+
         await fetch(TRACK_USER_ACTIVITY_URL, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${idToken}`
             },
             body: JSON.stringify(requestBody)
         });
     } catch(error) {
+        if (error.code === 403) {
+            authHelper.runAuthProcess();
+        }
         console.error(error);
     }
 }
