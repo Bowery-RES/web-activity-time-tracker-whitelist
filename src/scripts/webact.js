@@ -31,7 +31,7 @@ var initialWhiteList = [
     "http://www.realtyrates.com/",
     "https://store.rerc.com/",
     "https://zoneomics.com/",
-    "https://landgrid.com/",
+    "https://regrid.com/",
     "https://msc.fema.gov/portal/home",
     "https://mls.gsmls.com/member/login.do",
     "http://idp.hudson.safemls.net/",
@@ -170,7 +170,8 @@ function firstInitPage() {
         ui.setMode();
         tabsFromBackground = bg.tabs;
         currentTypeOfList = TypeListEnum.ToDay;
-        storage.saveValue(STORAGE_WHITE_LIST, initialWhiteList);
+        const whiteListToSave = initialWhiteList.map(item => new Url(item))
+        storage.saveValue(STORAGE_WHITE_LIST, whiteListToSave);
         // remove this
         getLimitsListFromStorage();
         getDataFromStorage();

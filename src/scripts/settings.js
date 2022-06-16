@@ -341,11 +341,13 @@ function actionAddRectrictionToList(newSite, newTime) {
 
 function actionAddWhiteSiteToList(newSite) {
     chrome.extension.getBackgroundPage().console.warn(whiteList);
+    const newSiteUrl = new Url(newSite);
+    updateWhiteList();
     if (!isContainsWhiteSite(newSite)) {
         addDomainToListBox(newSite);
         if (whiteList === undefined)
             whiteList = [];
-        whiteList.push(newSite);
+        whiteList.push(newSiteUrl);
         document.getElementById('addWhiteSiteLbl').value = '';
 
         updateWhiteList();
@@ -383,7 +385,7 @@ function addNewSiteClickHandler(lblName, timeName, actionCheck, notifyBlock) {
 
 function addDomainToListBox(domain) {
     var li = document.createElement('li');
-    li.innerText = domain;
+    li.innerText = domain.href || domain;
     var del = document.createElement('img');
     del.height = 12;
     del.src = '/icons/delete.png';
