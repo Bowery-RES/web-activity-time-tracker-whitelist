@@ -40,7 +40,7 @@ var STORAGE_REFRESH_TOKEN = 'refresh_token';
 
 var DEFERRED_TIMEOUT = 300000;
 
-var SETTINGS_INTERVAL_INACTIVITY_DEFAULT = InactivityInterval.second30;
+var SETTINGS_INTERVAL_INACTIVITY_DEFAULT = InactivityInterval.min5;
 var SETTINGS_INTERVAL_CHECK_DEFAULT = 1000;
 var SETTINGS_INTERVAL_SAVE_STORAGE_DEFAULT = 5000;
 var SETTINGS_INTERVAL_RANGE_DEFAULT = RangeForDays.days7;
@@ -75,7 +75,8 @@ const CHROME_EVENTS = {
     TABS: {
         ONACTIVATED: 'tabs:onActivated',
         ONUPDATED: 'tabs:onUpdated',
-        ONREMOVED: 'tabs:onRemoved'
+        ONREMOVED: 'tabs:onRemoved',
+        NOACTIVITY: 'activity:notDetected'
     },
     BROWSER: {
         ONREMOVED: 'windows:onRemoved'
