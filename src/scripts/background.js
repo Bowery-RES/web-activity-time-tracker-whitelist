@@ -56,7 +56,7 @@ function backgroundCheck() {
                         if (!tab.url.isMatch(currentTab)) {
                             activity.setCurrentActiveTab(tab.url);
                         }
-                        chrome.idle.queryState(parseInt(setting_interval_inactivity), function(state) {
+                        chrome.idle.queryState(parseInt(setting_interval_inactivity), state => {
                             if (state === 'active') {
                                 mainTRacker(activeUrl, tab, activeTab);
                             } else checkDOM(state, activeUrl, tab, activeTab);
@@ -266,15 +266,27 @@ const extractTime = (start, end) => {
     }
 }
 
-const mapTime = (item) => {
-    const intervalLength = item.intervals.length;
+const cleanIntervals = (intervals = []) => {
+    return intervals.filter(interval => {
+        const intervalStart = interval.split('-')[0];
+        const intervalEnd = interval.split('-')[1];
+        const startIndex = intervalStart.lastIndexOf(':');
+        const endIndex = intervalEnd.lastIndexOf(':');
+        const intervalStartWithoutMs = intervalStart.slice(0, startIndex);
+        const intervalEndWithoutMs = intervalEnd.slice(0, endIndex);
 
-    if (!intervalLength) {
-        return {duration: null, startTime: null};
-    }
+        return intervalStartWithoutMs !== intervalEndWithoutMs;
+    });
+}
+
+const mapTime = (item) => {
+    const intervalsArray = cleanIntervals(item.intervals);
+    const intervalLength = intervalsArray.length;
+
+    if (!intervalLength) return {duration: null, startTime: null};
 
     const [month, day, year] = item.day.split('/');
-    const lastInterval = item.intervals[intervalLength - 1];
+    const lastInterval = intervalsArray[intervalLength - 1];
     const [start, end] = lastInterval.split('-');
     const {hourStart, minStart, secStart, msStart, hourEnd, minEnd, secEnd, msEnd} = extractTime(start, end);
     const startTime = getStartTime({
@@ -313,7 +325,7 @@ const postUserActivity = async (requestBody) => {
     }
 }
 
-const getDataFromStorage = (itemName, defaultValue) => {
+const getInfoFromStorage = (itemName, defaultValue) => {
     return new Promise((resolve, reject) => {
         storage.getValue(itemName, result => {
             resolve(result || defaultValue);
@@ -321,22 +333,23 @@ const getDataFromStorage = (itemName, defaultValue) => {
     });
 }
 
-const trackUserActivity = async (url, actionType) => {
-    const userEmail = await getDataFromStorage(STORAGE_USER_EMAIL, '');
-    const latitude = await getDataFromStorage(USER_LOCATION_LAT, null);
-    const longitude = await getDataFromStorage(USER_LOCATION_LONG, null);
+const trackUserActivity = async (lastActiveUrl, actionType) => {
+    const userEmail = await getInfoFromStorage(STORAGE_USER_EMAIL, '');
+    const latitude = await getInfoFromStorage(USER_LOCATION_LAT, null);
+    const longitude = await getInfoFromStorage(USER_LOCATION_LONG, null);
     let listItems = timeIntervalList || [];
     listItems = listItems.filter(item => item.day === todayLocalDate());
     const activityArray = listItems.map(item => {
         const { duration, startTime } = mapTime(item);
         return {
-            url: item.url,
+            url: new Url(lastActiveUrl) || item.url,
             duration,
             startTime,
             actionType
         };
     });
-    const filteredActivity = activityArray.filter(item => item.duration && url.includes(item.url.host));
+    const filteredActivity = activityArray
+        .filter(item => item.duration && lastActiveUrl.includes(item.url.host));
     if (filteredActivity.length) {
         const requestBody =  {
             user: userEmail,
@@ -351,8 +364,8 @@ const trackUserActivity = async (url, actionType) => {
 }
 
 const trackUserActivityHelper = async (lastActiveTabUrl = '', actionType) => {
-    const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
-    const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.split('://')[1]));
+    const whiteList = await getInfoFromStorage(STORAGE_WHITE_LIST, []);
+    const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
     if (tabFromWhiteList) trackUserActivity(lastActiveTabUrl, actionType);
 }
 
@@ -368,13 +381,14 @@ function addListener() {
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
-            const whiteList = await getDataFromStorage(STORAGE_WHITE_LIST, []);
-            const isTabInWhiteList = whiteList.findIndex(item => tab.url.includes(item.split('://')[1]));
+            const whiteList = await getInfoFromStorage(STORAGE_WHITE_LIST, []);
+            const isTabInWhiteList = whiteList.findIndex(item => tab.url.includes(item.href.split('://')[1]));
             if (lastActiveTabUrl !== tab.url &&
                 lastActiveTabUrl !== EMPTY_TAB_URL &&
                 isTabInWhiteList !== -1
             ) {
-                const isLastActiveTabInWhiteList = whiteList.findIndex(item => lastActiveTabUrl.includes(item.split('://')[1]));
+                const isLastActiveTabInWhiteList = whiteList
+                    .findIndex(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
                 if (isLastActiveTabInWhiteList !== -1 &&
                     isLastActiveTabInWhiteList !== isTabInWhiteList
                 ) {
@@ -393,10 +407,13 @@ function addListener() {
             };
             return;
         };
-        if (tabToUrl[tabId] !== lastActiveTabUrl) {
-            await trackUserActivityHelper(tabToUrl[tabId], CHROME_EVENTS.TABS.ONREMOVED);
-        }
         delete tabToUrl[tabId];
+    });
+
+    chrome.idle.onStateChanged.addListener(newState => {
+        if (newState === 'idle') {
+            trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.NOACTIVITY);
+        }
     });
 
     chrome.webNavigation.onCompleted.addListener(function(details) {
@@ -433,7 +450,10 @@ function addListener() {
                 loadNotificationMessage();
             }
             if (key === SETTINGS_INTERVAL_INACTIVITY) {
-                storage.getValue(SETTINGS_INTERVAL_INACTIVITY, function(item) { setting_interval_inactivity = item; });
+                storage.getValue(SETTINGS_INTERVAL_INACTIVITY, (item) => {
+                    setting_interval_inactivity = item;
+                    chrome.idle.setDetectionInterval(+setting_interval_inactivity);
+                });
             }
             if (key === SETTINGS_VIEW_TIME_IN_BADGE) {
                 storage.getValue(SETTINGS_VIEW_TIME_IN_BADGE, function(item) { setting_view_in_badge = item; });
