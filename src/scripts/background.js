@@ -337,26 +337,30 @@ const trackUserActivity = async (lastActiveUrl, actionType) => {
     const latitude = await getInfoFromStorage(USER_LOCATION_LAT, null);
     const longitude = await getInfoFromStorage(USER_LOCATION_LONG, null);
     let listItems = timeIntervalList || [];
-    listItems = listItems.filter(item => item.day === todayLocalDate());
-    const activityArray = listItems.map(item => {
+    listItems = listItems
+        .filter(item => item.day === todayLocalDate())
+        .filter(item => lastActiveUrl.includes(item.url.host));
+    const activityArray = listItems.reduce((result, item) => {
         const { duration, startTime } = mapTime(item);
-        return {
-            url: new Url(lastActiveUrl) || item.url,
-            duration,
-            startTime,
-            actionType
-        };
-    });
-    const filteredActivity = activityArray
-        .filter(item => item.duration && lastActiveUrl.includes(item.url.host));
-    if (filteredActivity.length) {
+        if (duration) {
+            result.push( {
+                url: new Url(lastActiveUrl) || item.url,
+                duration,
+                startTime,
+                actionType
+            });
+        }
+        return result;
+    }, []);
+
+    if (activityArray.length) {
         const requestBody =  {
             user: userEmail,
             location: {
                 latitude,
                 longitude
             },
-            activity: filteredActivity
+            activity: activityArray
         };
         postUserActivity(requestBody);
     }
