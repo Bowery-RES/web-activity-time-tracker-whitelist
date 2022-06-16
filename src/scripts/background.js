@@ -266,10 +266,9 @@ const extractTime = (start, end) => {
     }
 }
 
-const cleanIntervals = (intervals = []) => {
+const filterIntervalsArray = (intervals = []) => {
     return intervals.filter(interval => {
-        const intervalStart = interval.split('-')[0];
-        const intervalEnd = interval.split('-')[1];
+        const [intervalStart, intervalEnd] = interval.split('-');
         const startIndex = intervalStart.lastIndexOf(':');
         const endIndex = intervalEnd.lastIndexOf(':');
         const intervalStartWithoutMs = intervalStart.slice(0, startIndex);
@@ -280,7 +279,7 @@ const cleanIntervals = (intervals = []) => {
 }
 
 const mapTime = (item) => {
-    const intervalsArray = cleanIntervals(item.intervals);
+    const intervalsArray = filterIntervalsArray(item.intervals);
     const intervalLength = intervalsArray.length;
 
     if (!intervalLength) return {duration: null, startTime: null};
