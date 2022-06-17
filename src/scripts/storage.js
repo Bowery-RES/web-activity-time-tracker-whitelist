@@ -33,18 +33,18 @@ class LocalStorage {
             }
         });
     }
-    
+
     getValuePromise(name) {
         return new Promise((resolve, reject) => {
-          chrome.storage.local.get(name, function (item) {
-            if (item) {
-              resolve(item[name]);
-            } else {
-              resolve(null);
-            }
-          });
+            chrome.storage.local.get(name, item => {
+                if (item) {
+                    resolve(item[name]);
+                } else {
+                    resolve(null);
+                }
+            });
         });
-      }
+    }
 
     getMemoryUse(name, callback) {
         chrome.storage.local.getBytesInUse(name, callback);

@@ -67,6 +67,7 @@ const USER_LOCATION_LAT = 'latitude';
 const USER_LOCATION_LONG = 'longitude';
 
 const TRACK_USER_ACTIVITY_URL = 'https://bl3ky3ae7i.execute-api.us-east-1.amazonaws.com/prod/user-activity';
+const AUTH_ERROR_MSG = 'User is not authorized to access this resource with an explicit deny';
 const EMPTY_TAB_URL = 'chrome://newtab/';
 
 const GEOLOCATION_ERROR_MSG = 'Geolocation - getCurrentPosition error';

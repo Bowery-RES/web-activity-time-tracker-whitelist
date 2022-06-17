@@ -314,7 +314,7 @@ const postUserActivity = async (requestBody) => {
     try {
         const idToken = await storage.getValuePromise(STORAGE_ID_TOKEN);
 
-        await fetch(TRACK_USER_ACTIVITY_URL, {
+        const response = await fetch(TRACK_USER_ACTIVITY_URL, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -322,58 +322,58 @@ const postUserActivity = async (requestBody) => {
             },
             body: JSON.stringify(requestBody)
         });
-    } catch(error) {
-        if (error.code === 403) {
+
+        if (!response.ok && response.status === 403) {
             authHelper.runAuthProcess();
+            throw new Error(`PostUserActivity method: ${AUTH_ERROR_MSG}`);
         }
+    } catch(error) {
         console.error(error);
     }
 }
 
-const getInfoFromStorage = (itemName, defaultValue) => {
-    return new Promise((resolve, reject) => {
-        storage.getValue(itemName, result => {
-            resolve(result || defaultValue);
-        });
-    });
-}
-
 const trackUserActivity = async (lastActiveUrl, actionType) => {
-    const userEmail = await getInfoFromStorage(STORAGE_USER_EMAIL, '');
-    const latitude = await getInfoFromStorage(USER_LOCATION_LAT, null);
-    const longitude = await getInfoFromStorage(USER_LOCATION_LONG, null);
-    let listItems = timeIntervalList || [];
-    listItems = listItems
-        .filter(item => item.day === todayLocalDate())
-        .filter(item => lastActiveUrl.includes(item.url.host));
-    const activityArray = listItems.reduce((result, item) => {
-        const { duration, startTime } = mapTime(item);
-        if (duration) {
-            result.push( {
-                url: new Url(lastActiveUrl) || item.url,
-                duration,
-                startTime,
-                actionType
-            });
-        }
-        return result;
-    }, []);
+    try {
+        const [userEmail, latitude, longitude] = await Promise.all([
+            storage.getValuePromise(STORAGE_USER_EMAIL),
+            storage.getValuePromise(USER_LOCATION_LAT),
+            storage.getValuePromise(USER_LOCATION_LONG)
+        ]);
+        let listItems = timeIntervalList || [];
+        listItems = listItems
+            .filter(item => item.day === todayLocalDate())
+            .filter(item => lastActiveUrl.includes(item.url.host));
+        const activityArray = listItems.reduce((result, item) => {
+            const { duration, startTime } = mapTime(item);
+            if (duration) {
+                result.push( {
+                    url: new Url(lastActiveUrl) || item.url,
+                    duration,
+                    startTime,
+                    actionType
+                });
+            }
+            return result;
+        }, []);
 
-    if (activityArray.length) {
-        const requestBody =  {
-            user: userEmail,
-            location: {
-                latitude,
-                longitude
-            },
-            activity: activityArray
-        };
-        postUserActivity(requestBody);
+        if (activityArray.length) {
+            const requestBody =  {
+                user: userEmail || '',
+                location: {
+                    latitude,
+                    longitude
+                },
+                activity: activityArray
+            };
+            postUserActivity(requestBody);
+        }
+    } catch(error) {
+        console.error(error);
     }
 }
 
 const trackUserActivityHelper = async (lastActiveTabUrl = '', actionType) => {
-    const whiteList = await getInfoFromStorage(STORAGE_WHITE_LIST, []);
+    const whiteList = await storage.getValuePromise(STORAGE_WHITE_LIST) || [];
     const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
     if (tabFromWhiteList) trackUserActivity(lastActiveTabUrl, actionType);
 }
@@ -390,7 +390,7 @@ function addListener() {
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
-            const whiteList = await getInfoFromStorage(STORAGE_WHITE_LIST, []);
+            const whiteList = await storage.getValuePromise(STORAGE_WHITE_LIST) || [];
             const isTabInWhiteList = whiteList.findIndex(item => tab.url.includes(item.href.split('://')[1]));
             if (lastActiveTabUrl !== tab.url &&
                 lastActiveTabUrl !== EMPTY_TAB_URL &&
