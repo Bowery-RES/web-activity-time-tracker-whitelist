@@ -18,7 +18,6 @@ var initialWhiteList = [
     "https://www.costar.com/",
     "https://pro.realquest.com/",
     "https://zola.planning.nyc.gov/",
-    "http://tax1.co.monmouth.nj.us/",
     "https://www.trulia.com/",
     "https://cre.moodysanalytics.com/",
     "http://www.loopnet.com/",
@@ -34,16 +33,14 @@ var initialWhiteList = [
     "https://regrid.com/",
     "https://msc.fema.gov/portal/home",
     "https://mls.gsmls.com/member/login.do",
-    "http://idp.hudson.safemls.net/",
     "https://njactb.org/",
     "https://www.hgar.com",
     "https://www.bouldergroup.com/research.html",
     "https://netleaseadvisor.com/",
-    "https://lrv.nassuacountyny.gov",
-    "https://www.nj.gov/dca/hmfa/developers/credits/compliance/limits.shtml",
     "https://www.state.nj.us/treasury/taxation/lpt/chapter123.shtml",
     "https://compstak.com",
-    "https://craigslist.org/"
+    "https://craigslist.org/",
+    "https://www.crexi.com/properties?types%5B%5D=Retail"
 ];
 var stat = {
     set firstDay(value) {
