@@ -310,25 +310,35 @@ const mapTime = (item) => {
     return {duration, startTime};
 }
 
+const authenticationErrorHandler = async (requestBody) => {
+    await authHelper.runAuthProcess();
+    await postUserActivity(requestBody);
+}
+
+const postUserActivityHandler = async (requestBody) => {
+    const idToken = await storage.getValuePromise(STORAGE_ID_TOKEN);
+    return await fetch(TRACK_USER_ACTIVITY_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify(requestBody)
+    });
+}
+
 const postUserActivity = async (requestBody) => {
     try {
-        const idToken = await storage.getValuePromise(STORAGE_ID_TOKEN);
-
-        const response = await fetch(TRACK_USER_ACTIVITY_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${idToken}`
-            },
-            body: JSON.stringify(requestBody)
-        });
+        const response = await postUserActivityHandler(requestBody);
 
         if (!response.ok && response.status === 403) {
-            authHelper.runAuthProcess();
-            throw new Error(`PostUserActivity method: ${AUTH_ERROR_MSG}`);
+            throw new AuthenticationError(AUTH_ERROR_MSG);
         }
     } catch(error) {
         console.error(error);
+        if (error instanceof AuthenticationError) {
+            await authenticationErrorHandler(requestBody);
+        }
     }
 }
 
