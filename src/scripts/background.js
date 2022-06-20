@@ -366,17 +366,25 @@ const trackUserActivity = async (lastActiveUrl, actionType) => {
     }
 }
 
-const trackUserActivityHelper = async (lastActiveTabUrl = '', actionType) => {
+const findTabInWhiteList = async (lastActiveTabUrl) => {
+    if (!lastActiveTabUrl) return -1;
     const whiteList = await getInfoFromStorage(STORAGE_WHITE_LIST, []);
-    const tabFromWhiteList = whiteList.find(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
-    if (tabFromWhiteList) trackUserActivity(lastActiveTabUrl, actionType);
+    return whiteList.findIndex(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
 }
 
 function addListener() {
     chrome.tabs.onActivated.addListener(activeInfo => {
         chrome.tabs.get(activeInfo.tabId, async (tab) => {
             activity.addTab(tab);
-            await trackUserActivityHelper(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
+            const tabIndex = await findTabInWhiteList(tab.url);
+            const lastActiveTabIndex = await findTabInWhiteList(lastActiveTabUrl);
+
+            if (tabIndex !== -1 && lastActiveTabIndex !== -1 && tabIndex !== lastActiveTabIndex) {
+                await trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
+            }
+            if (tabIndex === -1 && lastActiveTabIndex !== -1) {
+                await trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
+            }
             lastActiveTabUrl = tab.url;
             tabToUrl[activeInfo.tabId] = tab.url;
         });
@@ -384,16 +392,14 @@ function addListener() {
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
-            const whiteList = await getInfoFromStorage(STORAGE_WHITE_LIST, []);
-            const isTabInWhiteList = whiteList.findIndex(item => tab.url.includes(item.href.split('://')[1]));
+            const tabIndex = await findTabInWhiteList(tab.url);
             if (lastActiveTabUrl !== tab.url &&
                 lastActiveTabUrl !== EMPTY_TAB_URL &&
-                isTabInWhiteList !== -1
+                tabIndex !== -1
             ) {
-                const isLastActiveTabInWhiteList = whiteList
-                    .findIndex(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
-                if (isLastActiveTabInWhiteList !== -1 &&
-                    isLastActiveTabInWhiteList !== isTabInWhiteList
+                const lastActiveTabIndex = await findTabInWhiteList(lastActiveTabUrl);
+                if (lastActiveTabIndex !== -1 &&
+                    lastActiveTabIndex !== tabIndex
                 ) {
                     trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONUPDATED);
                 }
@@ -406,7 +412,8 @@ function addListener() {
     chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
         if (removeInfo.isWindowClosing) {
             if (tabToUrl[tabId] === lastActiveTabUrl) {
-                await trackUserActivityHelper(lastActiveTabUrl, CHROME_EVENTS.BROWSER.ONREMOVED)
+                const tabIndex = await findTabInWhiteList(lastActiveTabUrl);
+                if (tabIndex !== -1) trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.BROWSER.ONREMOVED);
             };
             return;
         };
@@ -414,7 +421,7 @@ function addListener() {
     });
 
     chrome.idle.onStateChanged.addListener(newState => {
-        if (newState === 'idle') {
+        if (newState === 'idle' || newState === 'locked') {
             trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.NOACTIVITY);
         }
     });
