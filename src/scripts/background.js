@@ -376,7 +376,7 @@ function addListener() {
     chrome.tabs.onActivated.addListener(activeInfo => {
         chrome.tabs.get(activeInfo.tabId, async (tab) => {
             activity.addTab(tab);
-            const tabIndex =  await findTabInWhiteList(tab.url);
+            const tabIndex = await findTabInWhiteList(tab.url);
             const lastActiveTabIndex = await findTabInWhiteList(lastActiveTabUrl);
 
             if (tabIndex !== -1 && lastActiveTabIndex !== -1 && tabIndex !== lastActiveTabIndex) {
@@ -392,7 +392,7 @@ function addListener() {
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
-            const tabIndex =  await findTabInWhiteList(tab.url);
+            const tabIndex = await findTabInWhiteList(tab.url);
             if (lastActiveTabUrl !== tab.url &&
                 lastActiveTabUrl !== EMPTY_TAB_URL &&
                 tabIndex !== -1
