@@ -1,4 +1,4 @@
-var RangeForDays = {
+const RangeForDays = {
     days2: 'days2',
     days3: 'days3',
     days4: 'days4',
@@ -10,7 +10,7 @@ var RangeForDays = {
     month3: 'month3'
 };
 
-var InactivityInterval = {
+const InactivityInterval = {
     second30: 30,
     second45: 45,
     min1: 60,
@@ -21,42 +21,34 @@ var InactivityInterval = {
     min30: 1800
 };
 
-var TypeListEnum = {
+const TypeListEnum = {
     ToDay: 1,
     All: 2,
     ByDays: 3,
 };
 
-var STORAGE_TABS = 'tabs';
-var STORAGE_WHITE_LIST = 'white_list';
-var STORAGE_RESTRICTION_LIST = 'restriction_list';
-var STORAGE_NOTIFICATION_LIST = 'notification_list';
-var STORAGE_NOTIFICATION_MESSAGE = 'notification_message';
-var STORAGE_TIMEINTERVAL_LIST = 'time_interval';
-var STORAGE_USER_EMAIL = 'user_email';
-var STORAGE_ID_TOKEN = 'id_token';
-var STORAGE_ID_TOKEN_EXPIRATION_DATE = 'id_token_expiration_date';
-var STORAGE_REFRESH_TOKEN = 'refresh_token';
+const STORAGE_TABS = 'tabs';
+const STORAGE_ALLOWED_LIST = 'allowed_list';
+const STORAGE_TIMEINTERVAL_LIST = 'time_interval';
+const STORAGE_USER_EMAIL = 'user_email';
+const STORAGE_ID_TOKEN = 'id_token';
+const STORAGE_ID_TOKEN_EXPIRATION_DATE = 'id_token_expiration_date';
+const STORAGE_REFRESH_TOKEN = 'refresh_token';
 
-var DEFERRED_TIMEOUT = 300000;
+const SETTINGS_INTERVAL_INACTIVITY_DEFAULT = InactivityInterval.min5;
+const SETTINGS_INTERVAL_CHECK_DEFAULT = 1000;
+const SETTINGS_INTERVAL_SAVE_STORAGE_DEFAULT = 5000;
+const SETTINGS_INTERVAL_RANGE_DEFAULT = RangeForDays.days7;
+const SETTINGS_VIEW_TIME_IN_BADGE_DEFAULT = true;
+const SETTINGS_DARK_MODE_DEFAULT = false;
+const SETTINGS_SHOW_HINT_DEFAULT = true;
 
-var SETTINGS_INTERVAL_INACTIVITY_DEFAULT = InactivityInterval.min5;
-var SETTINGS_INTERVAL_CHECK_DEFAULT = 1000;
-var SETTINGS_INTERVAL_SAVE_STORAGE_DEFAULT = 5000;
-var SETTINGS_INTERVAL_RANGE_DEFAULT = RangeForDays.days7;
-var SETTINGS_VIEW_TIME_IN_BADGE_DEFAULT = true;
-var SETTINGS_BLOCK_DEFERRAL_DEFAULT = true;
-var SETTINGS_DARK_MODE_DEFAULT = false;
-var SETTINGS_SHOW_HINT_DEFAULT = true;
-var STORAGE_NOTIFICATION_MESSAGE_DEFAULT = 'You have spent a lot of time on this site';
-
-var SETTINGS_INTERVAL_INACTIVITY = 'inactivity_interval';
-var SETTINGS_INTERVAL_SAVE_STORAGE = 'interval_save_in_storage';
-var SETTINGS_INTERVAL_RANGE = 'range_days';
-var SETTINGS_DARK_MODE = 'night_mode';
-var SETTINGS_VIEW_TIME_IN_BADGE = 'view_time_in_badge';
-var SETTINGS_BLOCK_DEFERRAL = 'view_block_deferral';
-var SETTINGS_SHOW_HINT = 'show_hint';
+const SETTINGS_INTERVAL_INACTIVITY = 'inactivity_interval';
+const SETTINGS_INTERVAL_SAVE_STORAGE = 'interval_save_in_storage';
+const SETTINGS_INTERVAL_RANGE = 'range_days';
+const SETTINGS_DARK_MODE = 'night_mode';
+const SETTINGS_VIEW_TIME_IN_BADGE = 'view_time_in_badge';
+const SETTINGS_SHOW_HINT = 'show_hint';
 
 // TODO clarify whether a hardcoded value can be used
 const CLIENT_SECRET = "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"
@@ -87,7 +79,7 @@ const CHROME_EVENTS = {
 const CLIENT_ID = '1015386027653-qb0c3i25f725tnovmuocllic0f4ekhnu.apps.googleusercontent.com';
 
 function isEmpty(obj) {
-    for (var prop in obj) {
+    for (let prop in obj) {
         if (obj.hasOwnProperty(prop))
             return false;
     }
@@ -96,14 +88,14 @@ function isEmpty(obj) {
 }
 
 function convertTimeToSummaryTime(time) {
-    var resultTimeValue = Number(time);
+    let resultTimeValue = Number(time);
     if (!isNaN(resultTimeValue)){
         return resultTimeValue;
     }
 
-    var timeValue = time.split(':');
-    var hour = timeValue[0];
-    var min = timeValue[1];
+    const timeValue = time.split(':');
+    const hour = timeValue[0];
+    const min = timeValue[1];
     resultTimeValue = 0;
     if (hour > 0)
         resultTimeValue = hour * 3600;
@@ -113,10 +105,10 @@ function convertTimeToSummaryTime(time) {
 }
 
 function convertSummaryTimeToBadgeString(summaryTime) {
-    var sec = (summaryTime);
-    var min = (summaryTime / 60).toFixed(0);
-    var hours = (summaryTime / (60 * 60)).toFixed(1);
-    var days = (summaryTime / (60 * 60 * 24)).toFixed(0);
+    const sec = (summaryTime);
+    const min = (summaryTime / 60).toFixed(0);
+    const hours = (summaryTime / (60 * 60)).toFixed(1);
+    const days = (summaryTime / (60 * 60 * 24)).toFixed(0);
 
     if (sec < 60) {
         return sec + "s";
@@ -130,9 +122,9 @@ function convertSummaryTimeToBadgeString(summaryTime) {
 }
 
 function convertShortSummaryTimeToString(summaryTime) {
-    var hours = Math.floor(summaryTime / 3600);
-    var totalSeconds = summaryTime % 3600;
-    var mins = Math.floor(totalSeconds / 60);
+    const totalSeconds = summaryTime % 3600;
+    let hours = Math.floor(summaryTime / 3600);
+    let mins = Math.floor(totalSeconds / 60);
 
     hours = zeroAppend(hours);
     mins = zeroAppend(mins);
@@ -141,9 +133,9 @@ function convertShortSummaryTimeToString(summaryTime) {
 }
 
 function convertShortSummaryTimeToLongString(summaryTime) {
-    var hours = Math.floor(summaryTime / 3600);
-    var totalSeconds = summaryTime % 3600;
-    var mins = Math.floor(totalSeconds / 60);
+    const totalSeconds = summaryTime % 3600;
+    let hours = Math.floor(summaryTime / 3600);
+    let mins = Math.floor(totalSeconds / 60);
 
     hours = zeroAppend(hours);
     mins = zeroAppend(mins);
@@ -152,12 +144,12 @@ function convertShortSummaryTimeToLongString(summaryTime) {
 }
 
 function getArrayTime(summaryTime) {
-    var days = Math.floor(summaryTime / 3600 / 24);
-    var totalHours = summaryTime % (3600 * 24);
-    var hours = Math.floor(totalHours / 3600);
-    var totalSeconds = summaryTime % 3600;
-    var mins = Math.floor(totalSeconds / 60);
-    var seconds = totalSeconds % 60;
+    let days = Math.floor(summaryTime / 3600 / 24);
+    let totalHours = summaryTime % (3600 * 24);
+    let hours = Math.floor(totalHours / 3600);
+    let totalSeconds = summaryTime % 3600;
+    let mins = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
 
     days = zeroAppend(days);
     hours = zeroAppend(hours);
@@ -173,12 +165,12 @@ function getArrayTime(summaryTime) {
 }
 
 function convertSummaryTimeToString(summaryTime) {
-    var days = Math.floor(summaryTime / 3600 / 24);
-    var totalHours = summaryTime % (3600 * 24);
-    var hours = Math.floor(totalHours / 3600);
-    var totalSeconds = summaryTime % 3600;
-    var mins = Math.floor(totalSeconds / 60);
-    var seconds = totalSeconds % 60;
+    let days = Math.floor(summaryTime / 3600 / 24);
+    let totalHours = summaryTime % (3600 * 24);
+    let hours = Math.floor(totalHours / 3600);
+    let totalSeconds = summaryTime % 3600;
+    let mins = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
 
     hours = zeroAppend(hours);
     mins = zeroAppend(mins);
@@ -227,16 +219,16 @@ function getDateFromRange(range) {
 }
 
 function treatAsUTC(date) {
-    var result = new Date(date);
+    let result = new Date(date);
     result.setMinutes(result.getMinutes() - result.getTimezoneOffset());
     return result;
 }
 
 function daysBetween(startDate, endDate) {
-    var millisecondsPerDay = 24 * 60 * 60 * 1000;
+    let millisecondsPerDay = 24 * 60 * 60 * 1000;
     return ((treatAsUTC(endDate) - treatAsUTC(startDate)) / millisecondsPerDay) + 1;
 }
 
-function todayLocalDate(){
+function todayLocalDate() {
     return new Date().toLocaleDateString('en-US');
 }

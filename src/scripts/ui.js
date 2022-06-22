@@ -212,14 +212,6 @@ class UI {
             spanUrl.appendChild(divForImage);
         }
 
-        if (typeOfList !== undefined && typeOfList === TypeListEnum.ToDay) {
-            if (restrictionList !== undefined && restrictionList.length > 0) {
-                this.addRestrictionIcon(tab, restrictionList, spanUrl);
-            } else {
-                getLimitsListFromStorage(() => this.addRestrictionIcon(tab, restrictionList, spanUrl));
-            }
-        }
-
         var spanVisits = this.createElement('span', ['span-visits', 'tooltip', 'visits'], counter !== undefined ? counter : 0);
         var visitsTooltip = this.createElement('span', ['tooltiptext'], 'Count of visits');
 
@@ -234,19 +226,6 @@ class UI {
             document.getElementById(blockName).appendChild(div);
         else
             this.getTableOfSite().appendChild(div);
-    }
-
-    addRestrictionIcon(tab, restrictions, spanUrl) {
-        var item = restrictions.find(x => x.url.isMatch(tab.url));
-        if (item !== undefined) {
-            var divLimit = this.createElement('div', ['tooltip', 'inline-block']);
-            var limitIcon = this.createElement('img', ['margin-left-5', 'tooltip']);
-            limitIcon.height = 15;
-            limitIcon.src = '/icons/limit.png';
-            var tooltip = this.createElement('span', ['tooltiptext'], "Daily limit is " + convertShortSummaryTimeToLongString(item.time));
-            divLimit = this.appendChild(divLimit, [limitIcon, tooltip]);
-            spanUrl.appendChild(divLimit);
-        }
     }
 
     createElementsForTotalTime(summaryTime, typeOfList, parentElement) {

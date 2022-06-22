@@ -1,17 +1,12 @@
-# Web Activity Time Tracker <a href="https://chrome.google.com/webstore/detail/web-activity-time-tracker/hhfnghjdeddcfegfekjeihfmbjenlomm" rel="nofollow"><img src="https://user-images.githubusercontent.com/768070/51865757-87d45300-2347-11e9-84fd-bafff5b036b2.png" alt="Add to Chrome" style="max-width:100%;"></a>
+# Off-app Web Activity Time Tracker <a href="https://chrome.google.com/webstore/detail/off-app-web-activity-time/fohohecjjcdhigfomohgljmaiglomlmd" rel="nofollow"><img src="https://user-images.githubusercontent.com/768070/51865757-87d45300-2347-11e9-84fd-bafff5b036b2.png" alt="Add to Chrome" style="max-width:100%;"></a>
 
-Web Activity Time Tracker keeps track of how much time you spend on the web and presents the stats in a useful and intuitive way. 
-You can set a daily visit limit for sites and block it after the expiration of the limit. 
+Off-app Web Activity Time Tracker keeps track of how much time you spend on the web and presents the stats in a useful and intuitive way.
 
-Extension uses only local [chrome.storage API](https://developer.chrome.com/apps/storage) chrome.storage API to store data and it does't send data anywhere.
-
-![image](https://user-images.githubusercontent.com/23387046/68947288-242bf100-07c6-11ea-8b08-184be2dd306a.png)
-
-If you have suggestions or problems using the extension, please [submit a bug or a feature request](https://github.com/Stigmatoz/web-activity-time-tracker/issues).
+Extension uses local [chrome.storage API](https://developer.chrome.com/apps/storage) chrome.storage API to store data and it also send data to [Pendo](https://app.pendo.io/).
 
 # Chrome Web Store
 
-Web Activity Time Tracker is available via the official [Chrome Web Store](https://chrome.google.com/webstore/detail/web-activity-time-tracker/hhfnghjdeddcfegfekjeihfmbjenlomm).
+Off-app Web Activity Time Tracker is available via the official [Chrome Web Store](https://chrome.google.com/webstore/detail/off-app-web-activity-time/fohohecjjcdhigfomohgljmaiglomlmd).
 
 # Install as an extension from source
 

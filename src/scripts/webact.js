@@ -1,7 +1,6 @@
 'use strict';
 
 var tabsFromBackground;
-var storage = new LocalStorage();
 var ui = new UI();
 var totalTime, averageTime;
 var tabsFromStorage;
@@ -9,8 +8,7 @@ var targetTabs;
 var currentTypeOfList;
 var setting_range_days;
 var setting_dark_mode;
-var restrictionList;
-var initialWhiteList = [
+var initialAllowedList = [
     "https://streeteasy.com/",
     "https://www.zillow.com/",
     "https://www.zumper.com/",
@@ -155,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     storage.getValue(STORAGE_USER_EMAIL, (email) => {
-      if (email) ui.setUserEmail(email);
+        if (email) ui.setUserEmail(email);
     });
 });
 
@@ -167,10 +165,8 @@ function firstInitPage() {
         ui.setMode();
         tabsFromBackground = bg.tabs;
         currentTypeOfList = TypeListEnum.ToDay;
-        const whiteListToSave = initialWhiteList.map(item => new Url(item))
-        storage.saveValue(STORAGE_WHITE_LIST, whiteListToSave);
-        // remove this
-        getLimitsListFromStorage();
+        const allowedListToSave = initialAllowedList.map(item => new Url(item));
+        storage.saveValue(STORAGE_ALLOWED_LIST, allowedListToSave);
         getDataFromStorage();
 
         storage.getValue(SETTINGS_SHOW_HINT, function (item) {
@@ -186,18 +182,6 @@ window.addEventListener('click', function (e) {
     }
 });
 
-function getLimitsListFromStorage(callback) {
-    callback = callback || (() => {});
-    if (!restrictionList) {
-        storage.loadTabs(STORAGE_RESTRICTION_LIST, items => {
-            getLimitsListFromStorageCallback(items);
-            callback();
-        });
-    } else {
-        callback();
-    }
-}
-
 function getDataFromStorage() {
     if (tabsFromBackground != undefined && tabsFromBackground != null && tabsFromBackground.length > 0)
         getTabsFromStorage(tabsFromBackground);
@@ -207,10 +191,6 @@ function getDataFromStorage() {
 function getDataFromStorageByDays() {
     if (tabsFromBackground != undefined && tabsFromBackground != null && tabsFromBackground.length > 0)
         getTabsByDays(tabsFromBackground);
-}
-
-function getLimitsListFromStorageCallback(items) {
-    restrictionList = (items || []).map(item => new Restriction(item.url, item.time));
 }
 
 function fillEmptyBlock() {
@@ -224,53 +204,53 @@ function getTabsFromStorage(tabs) {
 
     ui.clearUI();
     if (tabs === null) {
-      ui.fillEmptyBlock("chart");
-      return;
+        ui.fillEmptyBlock("chart");
+        return;
     }
 
     var counterOfSite;
     if (currentTypeOfList === TypeListEnum.All) {
         targetTabs = tabs;
-      if (targetTabs.length > 0) {
-        totalTime = getTotalTime(targetTabs, currentTypeOfList);
-        stat.allDaysTime = totalTime;
-      } else {
-        ui.fillEmptyBlock("chart");
-        return;
-      }
+        if (targetTabs.length > 0) {
+            totalTime = getTotalTime(targetTabs, currentTypeOfList);
+            stat.allDaysTime = totalTime;
+        } else {
+            ui.fillEmptyBlock("chart");
+            return;
+        }
 
-      counterOfSite = tabs.length;
+        counterOfSite = tabs.length;
     }
     if (currentTypeOfList === TypeListEnum.ToDay) {
-      targetTabs = tabs.filter((x) =>
-        x.days.find((s) => s.date === todayLocalDate())
-      );
-      counterOfSite = targetTabs.length;
-      if (targetTabs.length > 0) {
-        targetTabs = targetTabs.sort(function (a, b) {
-          return (
-            b.days.find((s) => s.date === todayLocalDate()).summary -
-            a.days.find((s) => s.date === todayLocalDate()).summary
-          );
-        });
+        targetTabs = tabs.filter((x) =>
+            x.days.find((s) => s.date === todayLocalDate())
+        );
+        counterOfSite = targetTabs.length;
+        if (targetTabs.length > 0) {
+            targetTabs = targetTabs.sort(function (a, b) {
+            return (
+                b.days.find((s) => s.date === todayLocalDate()).summary -
+                a.days.find((s) => s.date === todayLocalDate()).summary
+            );
+            });
 
-        totalTime = getTotalTime(targetTabs, currentTypeOfList);
-        stat.todayTime = totalTime;
-      } else {
-        ui.fillEmptyBlock("chart");
-        return;
-      }
+            totalTime = getTotalTime(targetTabs, currentTypeOfList);
+            stat.todayTime = totalTime;
+        } else {
+            ui.fillEmptyBlock("chart");
+            return;
+        }
     }
 
     if (currentTypeOfList === TypeListEnum.All)
-      ui.addTableHeader(
-        currentTypeOfList,
-        counterOfSite,
-        totalTime,
-        getFirstDay()
-      );
-    if (currentTypeOfList === TypeListEnum.ToDay)
-      ui.addTableHeader(currentTypeOfList, counterOfSite, totalTime);
+        ui.addTableHeader(
+            currentTypeOfList,
+            counterOfSite,
+            totalTime,
+            getFirstDay()
+        );
+        if (currentTypeOfList === TypeListEnum.ToDay)
+        ui.addTableHeader(currentTypeOfList, counterOfSite, totalTime);
 
     var currentTab = getCurrentTab();
 
@@ -279,32 +259,32 @@ function getTabsFromStorage(tabs) {
     var tabGroups = getTabGroups(targetTabs, currentTypeOfList);
 
     for (var i = 0; i < tabGroups.length; i++) {
-      var summaryTime = 0;
-      var counter = 0;
-      var tabGroup = tabGroups[i];
+        var summaryTime = 0;
+        var counter = 0;
+        var tabGroup = tabGroups[i];
 
-      summaryTime = tabGroup.summaryTime;
-      counter = tabGroup.counter;
+        summaryTime = tabGroup.summaryTime;
+        counter = tabGroup.counter;
 
-      summaryCounter += counter;
+        summaryCounter += counter;
 
-      const targetTab = tabGroup.tabs.find(t => t.url.isMatch(currentTab)) || tabGroup.tabs[0];
+        const targetTab = tabGroup.tabs.find(t => t.url.isMatch(currentTab)) || tabGroup.tabs[0];
 
-      if (
-        currentTypeOfList === TypeListEnum.ToDay ||
-        (currentTypeOfList === TypeListEnum.All && i <= 30)
-      )
-        ui.addLineToTableOfSite(
-          targetTab,
-          currentTab,
-          summaryTime,
-          currentTypeOfList,
-          counter
-        );
-      else ui.addExpander();
+        if (
+            currentTypeOfList === TypeListEnum.ToDay ||
+            (currentTypeOfList === TypeListEnum.All && i <= 30)
+        )
+            ui.addLineToTableOfSite(
+            targetTab,
+            currentTab,
+            summaryTime,
+            currentTypeOfList,
+            counter
+            );
+        else ui.addExpander();
 
-      var tabForChartUrl = i <= 8 ? tabGroup.host : 'Others';
-      addTabForChart(tabsForChart, tabForChartUrl, summaryTime, counter);
+        var tabForChartUrl = i <= 8 ? tabGroup.host : 'Others';
+        addTabForChart(tabsForChart, tabForChartUrl, summaryTime, counter);
     }
 
     ui.addHrAfterTableOfSite();
@@ -313,7 +293,7 @@ function getTabsFromStorage(tabs) {
     ui.setActiveTooltip(currentTab);
 
     ui.removePreloader();
-  }
+}
 
 function getTabsForTimeChart(timeIntervals) {
     var resultArr = [];
@@ -358,9 +338,9 @@ function groupTabsByHost(tabs) {
         var key = tab.url.host;
         (groups[key] = groups[key] || []).push(tab);
         return groups;
-      }, {});
+    }, {});
 
-      return tabGroups;
+    return tabGroups;
 }
 
 function getTabsForExpander() {

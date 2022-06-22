@@ -5,23 +5,13 @@ var timeIntervalList;
 var currentTab;
 var isNeedDeleteTimeIntervalFromTabs = false;
 var activity = new Activity();
-var storage = new LocalStorage();
 var authHelper = new AuthHelper();
-var deferredRestrictionsList;
 
-var setting_white_list;
-var setting_restriction_list;
+var setting_allowed_list;
 var setting_interval_save;
 var setting_interval_inactivity;
 var setting_view_in_badge;
-var setting_block_deferral;
 var setting_dark_mode;
-var setting_notification_list;
-var setting_notification_message;
-
-var isHasPermissioForYouTube;
-var isHasPermissioForNetflix;
-var isHasPermissioForNotification;
 
 let lastActiveTabUrl = '';
 let tabToUrl = {};
@@ -35,12 +25,12 @@ function updateStorage() {
 }
 
 function backgroundCheck() {
-    chrome.windows.getLastFocused({ populate: true }, function(currentWindow) {
+    chrome.windows.getLastFocused({ populate: true }, (currentWindow) => {
         if (currentWindow && currentWindow.focused) {
-            var activeTab = currentWindow.tabs.find(t => t.active === true);
+            let activeTab = currentWindow.tabs.find(t => t.active === true);
             if (activeTab !== undefined && activity.isValidPage(activeTab)) {
-                var activeUrl = new Url(activeTab.url);
-                var tab = activity.getTab(activeUrl);
+                let activeUrl = new Url(activeTab.url);
+                let tab = activity.getTab(activeUrl);
                 if (tab === undefined) {
                     activity.addTab(activeTab);
                 }
@@ -59,7 +49,7 @@ function backgroundCheck() {
                         chrome.idle.queryState(parseInt(setting_interval_inactivity), state => {
                             if (state === 'active') {
                                 mainTRacker(activeUrl, tab, activeTab);
-                            } else checkDOM(state, activeUrl, tab, activeTab);
+                            } else checkDOM();
                         });
                     }
                 }
@@ -69,22 +59,12 @@ function backgroundCheck() {
 }
 
 function mainTRacker(activeUrl, tab, activeTab) {
-    if (activity.isLimitExceeded(activeUrl, tab) && !activity.wasDeferred(activeUrl)) {
-        setBlockPageToCurrent(activeTab.url);
-    }
     if (!activity.isInBlackList(activeUrl)) {
-        if (activity.isNeedNotifyView(activeUrl, tab)) {
-            if (isHasPermissioForNotification) {
-                showNotification(activeUrl, tab);
-            } else {
-                checkPermissionsForNotifications(showNotification, activeUrl, tab);
-            }
-        }
         tab.incSummaryTime();
     }
     if (setting_view_in_badge === true) {
         chrome.browserAction.setBadgeBackgroundColor({ color: '#1aa1434d' })
-        var summary = tab.days.find(s => s.date === todayLocalDate()).summary;
+        let summary = tab.days.find(s => s.date === todayLocalDate()).summary;
         chrome.browserAction.setBadgeText({
             tabId: activeTab.id,
             text: String(convertSummaryTimeToBadgeString(summary))
@@ -98,97 +78,15 @@ function mainTRacker(activeUrl, tab, activeTab) {
     }
 }
 
-function showNotification(activeUrl, tab) {
-    chrome.notifications.clear('watt-site-notification', function(wasCleared) {
-        if (!wasCleared) {
-            console.log('!wasCleared');
-
-            chrome.notifications.create(
-                'watt-site-notification', {
-                    type: 'basic',
-                    iconUrl: 'icons/128x128.png',
-                    title: "Web Activity Time Tracker",
-                    contextMessage: activeUrl + ' ' + convertShortSummaryTimeToString(tab.getTodayTime()),
-                    message: setting_notification_message
-                },
-                function(notificationId) {
-                    console.log(notificationId);
-                    chrome.notifications.clear('watt-site-notification', function(wasCleared) {
-                        if (wasCleared)
-                            notificationAction(activeUrl, tab);
-                    });
-                });
-        } else {
-            notificationAction(activeUrl, tab);
-        }
-    });
-}
-
-function notificationAction(activeUrl, tab) {
-    chrome.notifications.create(
-        'watt-site-notification', {
-            type: 'basic',
-            iconUrl: 'icons/128x128.png',
-            title: "Web Activity Time Tracker",
-            contextMessage: activeUrl + ' ' + convertShortSummaryTimeToString(tab.getTodayTime()),
-            message: setting_notification_message
-        });
-}
-
-function setBlockPageToCurrent(currentUrl) {
-    var blockUrl = chrome.runtime.getURL("block.html") + '?url=' + currentUrl;
-    chrome.tabs.query({ currentWindow: true, active: true }, function(tab) {
-        chrome.tabs.update(tab.id, { url: blockUrl });
-    });
-}
-
 function isVideoPlayedOnPage() {
-    var videoElement = document.getElementsByTagName('video')[0];
+    let videoElement = document.getElementsByTagName('video')[0];
     if (videoElement !== undefined && videoElement.currentTime > 0 && !videoElement.paused && !videoElement.ended && videoElement.readyState > 2) {
         return true;
     } else return false;
 }
 
-function checkDOM(state, activeUrl, tab, activeTab) {
-    if (state === 'idle' && activeUrl.isMatch("youtube.com")) {
-        trackForYT(mainTRacker, activeUrl, tab, activeTab);
-    } else if (state === 'idle' && activeUrl.isMatch("netflix.com")) {
-        trackForNetflix(mainTRacker, activeUrl, tab, activeTab);
-    } else activity.closeIntervalForCurrentTab();
-}
-
-function trackForYT(callback, activeUrl, tab, activeTab) {
-    if (isHasPermissioForYouTube) {
-        executeScriptYoutube(callback, activeUrl, tab, activeTab);
-    } else {
-        checkPermissionsForYT(executeScriptYoutube, activity.closeIntervalForCurrentTab, callback, activeUrl, tab, activeTab);
-    }
-}
-
-function trackForNetflix(callback, activeUrl, tab, activeTab) {
-    if (isHasPermissioForNetflix) {
-        executeScriptNetflix(callback, activeUrl, tab, activeTab);
-    } else {
-        checkPermissionsForNetflix(executeScriptNetflix, activity.closeIntervalForCurrentTab, callback, activeUrl, tab, activeTab);
-    }
-}
-
-function executeScriptYoutube(callback, activeUrl, tab, activeTab) {
-    chrome.tabs.executeScript({ code: "var videoElement = document.getElementsByTagName('video')[0]; (videoElement !== undefined && videoElement.currentTime > 0 && !videoElement.paused && !videoElement.ended && videoElement.readyState > 2);" }, (results) => {
-        if (results !== undefined && results[0] !== undefined && results[0] === true)
-            callback(activeUrl, tab, activeTab);
-        else activity.closeIntervalForCurrentTab();
-    });
-}
-
-function executeScriptNetflix(callback, activeUrl, tab, activeTab) {
-    chrome.tabs.executeScript({ code: "var videoElement = document.getElementsByTagName('video')[0]; (videoElement !== undefined && videoElement.currentTime > 0 && !videoElement.paused && !videoElement.ended && videoElement.readyState > 2);" }, (results) => {
-        if (results !== undefined && results[0] !== undefined && results[0] === true) {
-            callback(activeUrl, tab, activeTab);
-        } else {
-            activity.closeIntervalForCurrentTab();
-        }
-    });
+function checkDOM() {
+    activity.closeIntervalForCurrentTab();
 }
 
 function backgroundUpdateStorage() {
@@ -213,10 +111,8 @@ function setDefaultSettings() {
     storage.saveValue(SETTINGS_INTERVAL_INACTIVITY, SETTINGS_INTERVAL_INACTIVITY_DEFAULT);
     storage.saveValue(SETTINGS_INTERVAL_RANGE, SETTINGS_INTERVAL_RANGE_DEFAULT);
     storage.saveValue(SETTINGS_VIEW_TIME_IN_BADGE, SETTINGS_VIEW_TIME_IN_BADGE_DEFAULT);
-    storage.saveValue(SETTINGS_BLOCK_DEFERRAL, SETTINGS_BLOCK_DEFERRAL_DEFAULT);
     storage.saveValue(SETTINGS_DARK_MODE, SETTINGS_DARK_MODE_DEFAULT);
     storage.saveValue(SETTINGS_INTERVAL_SAVE_STORAGE, SETTINGS_INTERVAL_SAVE_STORAGE_DEFAULT);
-    storage.saveValue(STORAGE_NOTIFICATION_MESSAGE, STORAGE_NOTIFICATION_MESSAGE_DEFAULT);
     navigator.geolocation.getCurrentPosition(saveCurrentPosition, showGeolocationError);
 }
 
@@ -226,10 +122,6 @@ function checkSettingsImEmpty() {
             setDefaultSettings();
         }
     });
-}
-
-function setDefaultValueForNewSettings() {
-    loadNotificationMessage();
 }
 
 const getStartTime = (param) => {
@@ -390,18 +282,18 @@ const getInfoFromStorage = (itemName, defaultValue) => {
     });
 }
 
-const findTabInWhiteList = async (lastActiveTabUrl) => {
+const findTabInAllowedList = async (lastActiveTabUrl) => {
     if (!lastActiveTabUrl) return -1;
-    const whiteList = await getInfoFromStorage(STORAGE_WHITE_LIST, []);
-    return whiteList.findIndex(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
+    const allowedListArray = await getInfoFromStorage(STORAGE_ALLOWED_LIST, []);
+    return allowedListArray.findIndex(item => lastActiveTabUrl.includes(item.href.split('://')[1]));
 }
 
 function addListener() {
     chrome.tabs.onActivated.addListener(activeInfo => {
         chrome.tabs.get(activeInfo.tabId, async (tab) => {
             activity.addTab(tab);
-            const tabIndex = await findTabInWhiteList(tab.url);
-            const lastActiveTabIndex = await findTabInWhiteList(lastActiveTabUrl);
+            const tabIndex = await findTabInAllowedList(tab.url);
+            const lastActiveTabIndex = await findTabInAllowedList(lastActiveTabUrl);
 
             if (tabIndex !== -1 && lastActiveTabIndex !== -1 && tabIndex !== lastActiveTabIndex) {
                 await trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
@@ -416,12 +308,12 @@ function addListener() {
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status === 'complete') {
-            const tabIndex = await findTabInWhiteList(tab.url);
+            const tabIndex = await findTabInAllowedList(tab.url);
             if (lastActiveTabUrl !== tab.url &&
                 lastActiveTabUrl !== EMPTY_TAB_URL &&
                 tabIndex !== -1
             ) {
-                const lastActiveTabIndex = await findTabInWhiteList(lastActiveTabUrl);
+                const lastActiveTabIndex = await findTabInAllowedList(lastActiveTabUrl);
                 if (lastActiveTabIndex !== -1 &&
                     lastActiveTabIndex !== tabIndex
                 ) {
@@ -436,7 +328,7 @@ function addListener() {
     chrome.tabs.onRemoved.addListener(async (tabId, removeInfo) => {
         if (removeInfo.isWindowClosing) {
             if (tabToUrl[tabId] === lastActiveTabUrl) {
-                const tabIndex = await findTabInWhiteList(lastActiveTabUrl);
+                const tabIndex = await findTabInAllowedList(lastActiveTabUrl);
                 if (tabIndex !== -1) trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.BROWSER.ONREMOVED);
             };
             return;
@@ -464,24 +356,14 @@ function addListener() {
         if (details.reason == 'update') {
             storage.saveValue(SETTINGS_SHOW_HINT, SETTINGS_SHOW_HINT_DEFAULT);
             checkSettingsImEmpty();
-            setDefaultValueForNewSettings();
             isNeedDeleteTimeIntervalFromTabs = true;
         }
     });
 
     chrome.storage.onChanged.addListener(function(changes, namespace) {
         for (var key in changes) {
-            if (key === STORAGE_WHITE_LIST) {
-                loadWhiteList();
-            }
-            if (key === STORAGE_RESTRICTION_LIST) {
-                loadRestrictionList();
-            }
-            if (key === STORAGE_NOTIFICATION_LIST) {
-                loadNotificationList();
-            }
-            if (key === STORAGE_NOTIFICATION_MESSAGE) {
-                loadNotificationMessage();
+            if (key === STORAGE_ALLOWED_LIST) {
+                loadAllowedList();
             }
             if (key === SETTINGS_INTERVAL_INACTIVITY) {
                 storage.getValue(SETTINGS_INTERVAL_INACTIVITY, (item) => {
@@ -492,16 +374,11 @@ function addListener() {
             if (key === SETTINGS_VIEW_TIME_IN_BADGE) {
                 storage.getValue(SETTINGS_VIEW_TIME_IN_BADGE, function(item) { setting_view_in_badge = item; });
             }
-            if (key === SETTINGS_BLOCK_DEFERRAL) {
-                storage.getValue(SETTINGS_BLOCK_DEFERRAL, function(item) { setting_block_deferral = item; });
-            }
             if (key === SETTINGS_DARK_MODE) {
                 storage.getValue(SETTINGS_DARK_MODE, function(item) { setting_dark_mode = item; });
             }
         }
     });
-
-    chrome.runtime.setUninstallURL("https://docs.google.com/forms/d/e/1FAIpQLSdImHtvey6sg5mzsQwWfAQscgZOOV52blSf9HkywSXJhuQQHg/viewform");
 }
 
 function loadTabs() {
@@ -509,7 +386,7 @@ function loadTabs() {
         tabs = [];
         items = items || [];
 
-        for (var i = 0; i < items.length; i++) {
+        for (let i = 0; i < items.length; i++) {
             tabs.push(new Tab(items[i].url, items[i].favicon, items[i].days, items[i].summaryTime, items[i].counter));
         }
         if (isNeedDeleteTimeIntervalFromTabs)
@@ -530,13 +407,12 @@ function deleteYesterdayTimeInterval() {
     timeIntervalList = timeIntervalList.filter(x => x.day == todayLocalDate());
 }
 
-function loadWhiteList() {
-    storage.getValue(STORAGE_WHITE_LIST, function(items) {
-        setting_white_list = [];
+function loadAllowedList() {
+    storage.getValue(STORAGE_ALLOWED_LIST, function(items) {
+        setting_allowed_list = [];
         items = items || [];
-
-        for (var i = 0; i < items.length; i++) {
-            setting_white_list.push(new Url(items[i]));
+        for (let i = 0; i < items.length; i++) {
+            setting_allowed_list.push(new Url(items[i]));
         }
     })
 }
@@ -546,7 +422,7 @@ function loadTimeIntervals() {
         timeIntervalList = [];
         items = items || [];
 
-        for (var i = 0; i < items.length; i++) {
+        for (let i = 0; i < items.length; i++) {
             // get user
             timeIntervalList.push(new TimeInterval(items[i].day, items[i].url || items[i].domain, items[i].intervals));
         }
@@ -554,99 +430,20 @@ function loadTimeIntervals() {
     });
 }
 
-function loadRestrictionList() {
-    storage.getValue(STORAGE_RESTRICTION_LIST, function(items) {
-        setting_restriction_list = [];
-        items = items || [];
-
-        for (var i = 0; i < items.length; i++) {
-            setting_restriction_list.push(new Restriction(items[i].url || items[i].domain, items[i].time));
-        }
-    });
-}
-
-function loadNotificationList() {
-    storage.getValue(STORAGE_NOTIFICATION_LIST, function(items) {
-        setting_notification_list = [];
-        items = items || [];
-
-        for (var i = 0; i < items.length; i++) {
-            setting_notification_list.push(new Notification(items[i].url || items[i].domain, items[i].time));
-        }
-    });
-}
-
-function loadNotificationMessage() {
-    storage.getValue(STORAGE_NOTIFICATION_MESSAGE, function(item) {
-        setting_notification_message = item;
-        if (isEmpty(setting_notification_message)) {
-            storage.saveValue(STORAGE_NOTIFICATION_MESSAGE, STORAGE_NOTIFICATION_MESSAGE_DEFAULT);
-            setting_notification_message = STORAGE_NOTIFICATION_MESSAGE_DEFAULT;
-        }
-    });
-}
-
 function loadSettings() {
     storage.getValue(SETTINGS_INTERVAL_INACTIVITY, function(item) { setting_interval_inactivity = item; });
     storage.getValue(SETTINGS_VIEW_TIME_IN_BADGE, function(item) { setting_view_in_badge = item; });
-    storage.getValue(SETTINGS_BLOCK_DEFERRAL, function(item) { setting_block_deferral = item; });
     storage.getValue(SETTINGS_DARK_MODE, function(item) { setting_dark_mode = item; });
 }
 
 function loadAddDataFromStorage() {
     loadTabs();
     loadTimeIntervals();
-    loadWhiteList();
-    loadRestrictionList();
-    loadNotificationList();
-    loadNotificationMessage();
+    // loadAllowedList();
     loadSettings();
 }
 
-function loadPermissions() {
-    checkPermissionsForYT();
-    checkPermissionsForNetflix();
-    checkPermissionsForNotifications();
-}
-
-function checkPermissionsForYT(callbackIfTrue, callbackIfFalse, ...props) {
-    chrome.permissions.contains({
-        permissions: ['tabs'],
-        origins: ["https://www.youtube.com/*"]
-    }, function(result) {
-        if (callbackIfTrue != undefined && result)
-            callbackIfTrue(...props);
-        if (callbackIfFalse != undefined && !result)
-            callbackIfFalse();
-        isHasPermissioForYouTube = result;
-    });
-}
-
-function checkPermissionsForNetflix(callbackIfTrue, callbackIfFalse, ...props) {
-    chrome.permissions.contains({
-        permissions: ['tabs'],
-        origins: ["https://www.netflix.com/*"]
-    }, function(result) {
-        if (callbackIfTrue != undefined && result)
-            callbackIfTrue(...props);
-        if (callbackIfFalse != undefined && !result)
-            callbackIfFalse();
-        isHasPermissioForNetflix = result;
-    });
-}
-
-function checkPermissionsForNotifications(callback, ...props) {
-    chrome.permissions.contains({
-        permissions: ["notifications"]
-    }, function(result) {
-        if (callback != undefined && result)
-            callback(...props);
-        isHasPermissioForNotification = result;
-    });
-}
-
 authHelper.runAuthProcess();
-loadPermissions();
 addListener();
 loadAddDataFromStorage();
 updateSummaryTime();

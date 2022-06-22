@@ -45,8 +45,6 @@ class LocalStorage {
             });
         });
     }
-
-    getMemoryUse(name, callback) {
-        chrome.storage.local.getBytesInUse(name, callback);
-    };
 }
+
+const storage = new LocalStorage();
