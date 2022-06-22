@@ -165,7 +165,9 @@ function firstInitPage() {
         ui.setMode();
         tabsFromBackground = bg.tabs;
         currentTypeOfList = TypeListEnum.ToDay;
-        const allowedListToSave = initialAllowedList.map(item => new Url(item));
+        const allowedListToSave = bg.setting_allowed_list.length ?
+            bg.setting_allowed_list :
+            initialAllowedList.map(item => new Url(item));
         storage.saveValue(STORAGE_ALLOWED_LIST, allowedListToSave);
         getDataFromStorage();
 

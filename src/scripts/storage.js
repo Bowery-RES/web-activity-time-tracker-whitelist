@@ -27,7 +27,7 @@ class LocalStorage {
     }
 
     getValue(name, callback) {
-        chrome.storage.local.get(name, function(item) {
+        chrome.storage.local.get(name, (item) => {
             if (item !== undefined) {
                 callback(item[name]);
             }
