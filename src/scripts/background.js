@@ -78,13 +78,6 @@ function mainTRacker(activeUrl, tab, activeTab) {
     }
 }
 
-function isVideoPlayedOnPage() {
-    let videoElement = document.getElementsByTagName('video')[0];
-    if (videoElement !== undefined && videoElement.currentTime > 0 && !videoElement.paused && !videoElement.ended && videoElement.readyState > 2) {
-        return true;
-    } else return false;
-}
-
 function checkDOM() {
     activity.closeIntervalForCurrentTab();
 }
@@ -439,7 +432,7 @@ function loadSettings() {
 function loadAddDataFromStorage() {
     loadTabs();
     loadTimeIntervals();
-    // loadAllowedList();
+    loadAllowedList();
     loadSettings();
 }
 
