@@ -7,6 +7,7 @@ class AuthHelper {
 
   async runAuthProcess() {
     this._authAttempts++;
+    // TODO add logic to manage this case
     if (this._authAttempts > 3) return;
 
     const [refreshToken, idToken, idTokenExpirationDate] = await Promise.all([
@@ -25,7 +26,7 @@ class AuthHelper {
         );
         this._saveIdTokenData(id_token, expires_in);
 
-        this.runAuthProcess();
+        await this.runAuthProcess();
       }
     } else {
       const code = await this._getAuthCode();
@@ -37,7 +38,7 @@ class AuthHelper {
         storage.saveValue(STORAGE_REFRESH_TOKEN, refresh_token);
       }
 
-      this.runAuthProcess();
+      await this.runAuthProcess();
     }
   }
 

@@ -58,6 +58,7 @@ var SETTINGS_VIEW_TIME_IN_BADGE = 'view_time_in_badge';
 var SETTINGS_BLOCK_DEFERRAL = 'view_block_deferral';
 var SETTINGS_SHOW_HINT = 'show_hint';
 
+// TODO clarify whether a hardcoded value can be used
 const CLIENT_SECRET = "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"
 const HOURS_MS = 3600000;
 const MIN_MS = 60000;

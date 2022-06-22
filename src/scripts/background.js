@@ -310,7 +310,7 @@ const mapTime = (item) => {
     return {duration, startTime};
 }
 
-const authenticationErrorHandler = async (requestBody) => {
+const handleAuthError = async (requestBody) => {
     await authHelper.runAuthProcess();
     await postUserActivity(requestBody);
 }
@@ -337,7 +337,7 @@ const postUserActivity = async (requestBody) => {
     } catch(error) {
         console.error(error);
         if (error instanceof AuthenticationError) {
-            await authenticationErrorHandler(requestBody);
+            await handleAuthError(requestBody);
         }
     }
 }

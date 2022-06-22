@@ -43,7 +43,7 @@
                         "scripts/tab.js",
                         "scripts/timeInterval.js",
                         "scripts/authHelper.js",
-                        "scripts/authenticationError.js",
+                        "scripts/error/authenticationError.js",
                         "scripts/url.js",
                         "scripts/background.js",
                         "scripts/restriction.js"
