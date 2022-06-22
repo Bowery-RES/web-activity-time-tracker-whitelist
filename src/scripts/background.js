@@ -310,15 +310,73 @@ const mapTime = (item) => {
     return {duration, startTime};
 }
 
+const handleAuthError = async (requestBody) => {
+    await authHelper.runAuthProcess();
+    await postUserActivity(requestBody);
+}
+
+const postUserActivityHandler = async (requestBody) => {
+    const idToken = await storage.getValuePromise(STORAGE_ID_TOKEN);
+    return await fetch(TRACK_USER_ACTIVITY_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify(requestBody)
+    });
+}
+
 const postUserActivity = async (requestBody) => {
     try {
-        await fetch(TRACK_USER_ACTIVITY_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestBody)
-        });
+        const response = await postUserActivityHandler(requestBody);
+
+        if (!response.ok && response.status === 403) {
+            throw new AuthenticationError(AUTH_ERROR_MSG);
+        }
+    } catch(error) {
+        console.error(error);
+        if (error instanceof AuthenticationError) {
+            await handleAuthError(requestBody);
+        }
+    }
+}
+
+const trackUserActivity = async (lastActiveUrl, actionType) => {
+    try {
+        const [userEmail, latitude, longitude] = await Promise.all([
+            storage.getValuePromise(STORAGE_USER_EMAIL),
+            storage.getValuePromise(USER_LOCATION_LAT),
+            storage.getValuePromise(USER_LOCATION_LONG)
+        ]);
+        let listItems = timeIntervalList || [];
+        listItems = listItems
+            .filter(item => item.day === todayLocalDate())
+            .filter(item => lastActiveUrl.includes(item.url.host));
+        const activityArray = listItems.reduce((result, item) => {
+            const { duration, startTime } = mapTime(item);
+            if (duration) {
+                result.push( {
+                    url: new Url(lastActiveUrl) || item.url,
+                    duration,
+                    startTime,
+                    actionType
+                });
+            }
+            return result;
+        }, []);
+
+        if (activityArray.length) {
+            const requestBody =  {
+                user: userEmail || '',
+                location: {
+                    latitude,
+                    longitude
+                },
+                activity: activityArray
+            };
+            postUserActivity(requestBody);
+        }
     } catch(error) {
         console.error(error);
     }
@@ -330,40 +388,6 @@ const getInfoFromStorage = (itemName, defaultValue) => {
             resolve(result || defaultValue);
         });
     });
-}
-
-const trackUserActivity = async (lastActiveUrl, actionType) => {
-    const userEmail = await getInfoFromStorage(STORAGE_USER_EMAIL, '');
-    const latitude = await getInfoFromStorage(USER_LOCATION_LAT, null);
-    const longitude = await getInfoFromStorage(USER_LOCATION_LONG, null);
-    let listItems = timeIntervalList || [];
-    listItems = listItems
-        .filter(item => item.day === todayLocalDate())
-        .filter(item => lastActiveUrl.includes(item.url.host));
-    const activityArray = listItems.reduce((result, item) => {
-        const { duration, startTime } = mapTime(item);
-        if (duration) {
-            result.push( {
-                url: new Url(lastActiveUrl) || item.url,
-                duration,
-                startTime,
-                actionType
-            });
-        }
-        return result;
-    }, []);
-
-    if (activityArray.length) {
-        const requestBody =  {
-            user: userEmail,
-            location: {
-                latitude,
-                longitude
-            },
-            activity: activityArray
-        };
-        postUserActivity(requestBody);
-    }
 }
 
 const findTabInWhiteList = async (lastActiveTabUrl) => {
