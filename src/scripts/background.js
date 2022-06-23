@@ -399,18 +399,22 @@ const findTabInWhiteList = async (lastActiveTabUrl) => {
 function addListener() {
     chrome.tabs.onActivated.addListener(activeInfo => {
         chrome.tabs.get(activeInfo.tabId, async (tab) => {
-            activity.addTab(tab);
-            const tabIndex = await findTabInWhiteList(tab.url);
-            const lastActiveTabIndex = await findTabInWhiteList(lastActiveTabUrl);
+            if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError.message);
+            } else {
+                activity.addTab(tab);
+                const tabIndex = await findTabInWhiteList(tab.url);
+                const lastActiveTabIndex = await findTabInWhiteList(lastActiveTabUrl);
 
-            if (tabIndex !== -1 && lastActiveTabIndex !== -1 && tabIndex !== lastActiveTabIndex) {
-                await trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
+                if (tabIndex !== -1 && lastActiveTabIndex !== -1 && tabIndex !== lastActiveTabIndex) {
+                    await trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
+                }
+                if (tabIndex === -1 && lastActiveTabIndex !== -1) {
+                    await trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
+                }
+                lastActiveTabUrl = tab.url;
+                tabToUrl[activeInfo.tabId] = tab.url;
             }
-            if (tabIndex === -1 && lastActiveTabIndex !== -1) {
-                await trackUserActivity(lastActiveTabUrl, CHROME_EVENTS.TABS.ONACTIVATED);
-            }
-            lastActiveTabUrl = tab.url;
-            tabToUrl[activeInfo.tabId] = tab.url;
         });
     });
 
@@ -450,9 +454,13 @@ function addListener() {
         }
     });
 
-    chrome.webNavigation.onCompleted.addListener(function(details) {
+    chrome.webNavigation.onCompleted.addListener((details) => {
         chrome.tabs.get(details.tabId, function(tab) {
-            activity.updateFavicon(tab);
+            if (chrome.runtime.lastError) {
+                console.log(chrome.runtime.lastError.message);
+            } else {
+                activity.updateFavicon(tab);
+            }
         });
     });
 
