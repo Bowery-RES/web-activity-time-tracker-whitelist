@@ -37,7 +37,8 @@
         ],
         "offline_enabled": true,
         "background": {
-            "scripts": ["scripts/common.js",
+            "scripts": ["scripts/initialAllowedList.js",
+                        "scripts/common.js",
                         "scripts/storage.js",
                         "scripts/activity.js",
                         "scripts/tab.js",
