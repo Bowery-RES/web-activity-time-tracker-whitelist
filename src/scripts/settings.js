@@ -1,56 +1,11 @@
-var storage = new LocalStorage();
-var whiteList = [];
-var restrictionList = [];
-var notifyList = [];
-var blockBtnList = ['settingsBtn', 'restrictionsBtn', 'notifyBtn', 'aboutBtn', 'donateBtn'];
-var blockList = ['settingsBlock', 'restrictionsBlock', 'notifyBlock', 'aboutBlock', 'donateBlock'];
+var allowedList = [];
 
 document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('settingsBtn').addEventListener('click', function () {
-        setBlockEvent('settingsBtn', 'settingsBlock');
-    });
-    document.getElementById('restrictionsBtn').addEventListener('click', function () {
-        setBlockEvent('restrictionsBtn', 'restrictionsBlock');
-    });
-    document.getElementById('notifyBtn').addEventListener('click', function () {
-        setBlockEvent('notifyBtn', 'notifyBlock');
-    });
-    document.getElementById('aboutBtn').addEventListener('click', function () {
-        setBlockEvent('aboutBtn', 'aboutBlock');
-        loadVersion();
-    });
-    document.getElementById('donateBtn').addEventListener('click', function () {
-        setBlockEvent('donateBtn', 'donateBlock');
-    });
-    document.getElementById('clearAllData').addEventListener('click', function () {
-        clearAllData();
-    });
-    document.getElementById('exportToCsv').addEventListener('click', function () {
-        exportToCSV();
-    });
-    document.getElementById('backup').addEventListener('click', function () {
-        backup();
-    });
-    document.getElementById('restore').addEventListener('click', function () {
-        restoreDataClick();
-    });
-    document.getElementById('file-input-backup').addEventListener('change', function (e) {
-        restore(e);
-    });
-    document.getElementById('addWhiteSiteBtn').addEventListener('click', function () {
-        addNewSiteClickHandler('addWhiteSiteLbl', null, actionAddWhiteSiteToList, 'notifyForBlackList');
-    });
-    document.getElementById('addRestrictionSiteBtn').addEventListener('click', function () {
-        addNewSiteClickHandler('addRestrictionSiteLbl', 'addRestrictionTimeLbl', actionAddRectrictionToList, 'notifyForRestrictionList');
-    });
-    document.getElementById('addNotifySiteBtn').addEventListener('click', function () {
-        addNewSiteClickHandler('addNotifySiteLbl', 'addNotifyTimeLbl', actionAddNotifyToList, 'notifyForNotifyList');
+    document.getElementById('addAllowedSiteBtn').addEventListener('click', function () {
+        addNewSiteClickHandler('addAllowedSiteLbl', null, actionAddAllowedSiteToList, 'notifyForBlackList');
     });
     document.getElementById('viewTimeInBadge').addEventListener('change', function () {
         storage.saveValue(SETTINGS_VIEW_TIME_IN_BADGE, this.checked);
-    });
-    document.getElementById('blockDeferral').addEventListener('change', function () {
-        storage.saveValue(SETTINGS_BLOCK_DEFERRAL, this.checked);
     });
     document.getElementById('darkMode').addEventListener('change', function () {
         storage.saveValue(SETTINGS_DARK_MODE, this.checked);
@@ -61,37 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('rangeToDays').addEventListener('change', function () {
         storage.saveValue(SETTINGS_INTERVAL_RANGE, this.value);
     });
-    document.getElementById('grantPermissionForYT').addEventListener('click', function () {
-        grantPermissionForYT();
-    });
-    document.getElementById('grantPermissionForNetflix').addEventListener('click', function () {
-        grantPermissionForNetflix();
-    });
-    document.getElementById('grantPermissionForNotifications').addEventListener('click', function () {
-        grantPermissionForNotifications();
-    });
-    document.getElementById('notifyMessage').addEventListener('change', function () {
-        updateNotificationMessage();
-    });
     $('.clockpicker').clockpicker();
 
     loadSettings();
 });
-
-function setBlockEvent(btnName, blockName) {
-    blockBtnList.forEach(element => {
-        if (element === btnName) {
-            document.getElementById(btnName).classList.add('active');
-        }
-        else document.getElementById(element).classList.remove('active');
-    });
-
-    blockList.forEach(element => {
-        if (element === blockName) {
-            document.getElementById(blockName).hidden = false;
-        } else document.getElementById(element).hidden = true;
-    });
-}
 
 function loadSettings() {
     storage.getValue(SETTINGS_INTERVAL_INACTIVITY, function (item) {
@@ -103,76 +31,24 @@ function loadSettings() {
     storage.getValue(SETTINGS_VIEW_TIME_IN_BADGE, function (item) {
         document.getElementById('viewTimeInBadge').checked = item;
     });
-    storage.getValue(SETTINGS_BLOCK_DEFERRAL, function (item) {
-        document.getElementById('blockDeferral').checked = item;
-    });
     storage.getValue(SETTINGS_DARK_MODE, function (item) {
         document.getElementById('darkMode').checked = item;
-    });
-    storage.getMemoryUse(STORAGE_TABS, function (integer) {
-        document.getElementById('memoryUse').innerHTML = (integer / 1024).toFixed(2) + 'Kb';
     });
     storage.getValue(STORAGE_TABS, function (item) {
         let s = item;
     });
-    storage.getValue(STORAGE_WHITE_LIST, function (items) {
-        whiteList = (items || []).map(item => new Url(item))
-        viewWhiteList(whiteList);
-    });
-    storage.getValue(STORAGE_RESTRICTION_LIST, function (items) {
-        restrictionList = (items || []).map(item => new Restriction(item.url || item.domain, item.time));
-        viewRestrictionList(restrictionList);
-    });
-    storage.getValue(STORAGE_NOTIFICATION_LIST, function (items) {
-        notifyList = (items || []).map(item => new Notification(item.url || item.domain, item.time));
-        viewNotificationList(notifyList);
-    });
-    storage.getValue(STORAGE_NOTIFICATION_MESSAGE, function (mess) {
-        document.getElementById('notifyMessage').value = mess;
-    });
-    checkPermissionsForYT();
-    checkPermissionsForNetflix();
-    checkPermissionsForNotifications();
-}
-
-function checkPermissionsForYT() {
-    chrome.permissions.contains({
-        permissions: ['tabs'],
-        origins: ["https://www.youtube.com/*"]
-    }, function (result) {
-        if (result) {
-            setUIForAnyPermissionForYT();
-        }
-    });
-}
-
-function checkPermissionsForNetflix() {
-    chrome.permissions.contains({
-        permissions: ['tabs'],
-        origins: ["https://www.netflix.com/*"]
-    }, function (result) {
-        if (result) {
-            setUIForAnyPermissionForNetflix();
-        }
-    });
-}
-
-function checkPermissionsForNotifications() {
-    chrome.permissions.contains({
-        permissions: ["notifications"]
-    }, function (result) {
-        if (result) {
-            setUIForAnyPermissionForNotifications();
-        }
+    storage.getValue(STORAGE_ALLOWED_LIST, function (items) {
+        allowedList = (items || []).map(item => item instanceof Url ? item : new Url(item));
+        viewAllowedList(allowedList);
     });
 }
 
 function loadVersion() {
-    var version = chrome.runtime.getManifest().version;
+    let version = chrome.runtime.getManifest().version;
     document.getElementById('version').innerText = 'v' + version;
 }
 
-function viewWhiteList(items) {
+function viewAllowedList(items) {
     if (items !== undefined) {
         for (var i = 0; i < items.length; i++) {
             addDomainToListBox(items[i]);
@@ -180,201 +56,29 @@ function viewWhiteList(items) {
     }
 }
 
-function grantPermissionForYT() {
-    chrome.permissions.request({
-        permissions: ['tabs'],
-        origins: ["https://www.youtube.com/*"]
-    }, function (granted) {
-        // The callback argument will be true if the user granted the permissions.
-        if (granted) {
-            setUIForAnyPermissionForYT();
-        }
-    });
-}
-
-function grantPermissionForNetflix() {
-    chrome.permissions.request({
-        permissions: ['tabs'],
-        origins: ["https://www.netflix.com/*"]
-    }, function (granted) {
-        // The callback argument will be true if the user granted the permissions.
-        if (granted) {
-            setUIForAnyPermissionForNetflix();
-        }
-    });
-}
-
-function grantPermissionForNotifications() {
-    chrome.permissions.request({
-        permissions: ["notifications"]
-    }, function (granted) {
-        // The callback argument will be true if the user granted the permissions.
-        if (granted) {
-            setUIForAnyPermissionForNotifications();
-        }
-    });
-}
-
-function setUIForAnyPermissionForYT() {
-    document.getElementById('permissionSuccessedBlockForYT').hidden = false;
-    document.getElementById('permissionSuccessedBlockForYT').classList.add('inline-block');
-    document.getElementById('grantPermissionForYT').hidden = true;
-}
-
-function setUIForAnyPermissionForNetflix() {
-    document.getElementById('permissionSuccessedBlockForNetflix').hidden = false;
-    document.getElementById('permissionSuccessedBlockForNetflix').classList.add('inline-block');
-    document.getElementById('grantPermissionForNetflix').hidden = true;
-}
-
-function setUIForAnyPermissionForNotifications() {
-    document.getElementById('permissionSuccessedBlockForNotifications').hidden = false;
-    document.getElementById('permissionSuccessedBlockForNotifications').classList.add('inline-block');
-    document.getElementById('grantPermissionForNotifications').hidden = true;
-}
-
-function viewNotificationList(items) {
-    if (items !== undefined) {
-        for (var i = 0; i < items.length; i++) {
-            addDomainToEditableListBox(items[i], 'notifyList', actionEditSite, deleteNotificationSite, updateItemFromNotifyList, updateNotificationList);
-        }
-    }
-}
-
-function viewRestrictionList(items) {
-    if (items !== undefined) {
-        for (var i = 0; i < items.length; i++) {
-            addDomainToEditableListBox(items[i], 'restrictionsList', actionEditSite, deleteRestrictionSite, updateItemFromRestrictionList, updateRestrictionList);
-        }
-    }
-}
-
-function exportToCSV() {
-    storage.getValue(STORAGE_TABS, function (item) {
-        toCsv(item);
-    });
-}
-
-function backup() {
-    storage.getValue(STORAGE_TABS, function (item) {
-        let tabs = JSON.stringify(item);
-        createFile(tabs, "application/json", 'backup.json');
-        viewNotify('notify-backup');
-    });
-}
-
-function restoreDataClick() {
-    document.getElementById('file-input-backup').click();
-}
-
-function restore(e) {
-    let file = e.target.files[0];
-    if (file.type === "application/json") {
-        var reader = new FileReader();
-        reader.readAsText(file, 'UTF-8');
-
-        reader.onload = readerEvent => {
-            let content = readerEvent.target.result;
-            let tabs = JSON.parse(content);
-            chrome.extension.getBackgroundPage().tabs = tabs;
-            storage.saveTabs(tabs, allDataDeletedSuccess);
-            viewNotify('notify-restore');
-        }
-    } else {
-        viewNotify('notify-restore-failed');
-    }
-}
-
-function toCsv(tabsData) {
-    var str = 'domain,date,time(sec)\r\n';
-    for (var i = 0; i < tabsData.length; i++) {
-        for (var y = 0; y < tabsData[i].days.length; y++) {
-            var line = tabsData[i].url + ',' + new Date(tabsData[i].days[y].date).toLocaleDateString() + ',' + tabsData[i].days[y].summary;
-            str += line + '\r\n';
-        }
-    }
-
-    createFile(str, "text/csv", 'domains.csv');
-}
-
-function createFile(data, type, fileName) {
-    var file = new Blob([data], { type: type });
-    var downloadLink;
-    downloadLink = document.createElement("a");
-    downloadLink.download = fileName;
-    downloadLink.href = window.URL.createObjectURL(file);
-    downloadLink.style.display = "none";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-}
-
-function clearAllData() {
-    var tabs = [];
-    chrome.extension.getBackgroundPage().tabs = tabs;
-    storage.saveTabs(tabs, allDataDeletedSuccess);
-}
-
-function allDataDeletedSuccess() {
-    viewNotify('notify');
-}
-
 function viewNotify(elementName) {
     document.getElementById(elementName).hidden = false;
     setTimeout(function () { document.getElementById(elementName).hidden = true; }, 3000);
 }
 
-function actionAddRectrictionToList(newSite, newTime) {
-    if (!isContainsRestrictionSite(newSite)) {
-        var restriction = new Restriction(newSite, newTime);
-        addDomainToEditableListBox(restriction, 'restrictionsList', actionEditSite, deleteRestrictionSite, updateItemFromRestrictionList, updateRestrictionList);
-        if (restrictionList === undefined)
-            restrictionList = [];
-        restrictionList.push(restriction);
-        document.getElementById('addRestrictionSiteLbl').value = '';
-        document.getElementById('addRestrictionTimeLbl').value = '';
-
-        updateRestrictionList();
-
-        return true;
-    } else return false;
-}
-
-function actionAddWhiteSiteToList(newSite) {
-    chrome.extension.getBackgroundPage().console.warn(whiteList);
+function actionAddAllowedSiteToList(newSite) {
     const newSiteUrl = new Url(newSite);
-    updateWhiteList();
-    if (!isContainsWhiteSite(newSite)) {
+
+    if (!isContainsAllowedSite(newSite)) {
         addDomainToListBox(newSite);
-        if (whiteList === undefined)
-            whiteList = [];
-        whiteList.push(newSiteUrl);
-        document.getElementById('addWhiteSiteLbl').value = '';
+        if (allowedList === undefined) allowedList = [];
+        allowedList.push(newSiteUrl);
+        document.getElementById('addAllowedSiteLbl').value = '';
 
-        updateWhiteList();
-
-        return true;
-    } else return false;
-}
-
-function actionAddNotifyToList(newSite, newTime) {
-    if (!isContainsNotificationSite(newSite)) {
-        var notify = new Notification(newSite, newTime);
-        addDomainToEditableListBox(notify, 'notifyList', actionEditSite, deleteNotificationSite, updateItemFromNotifyList, updateNotificationList);
-        if (notifyList === undefined)
-            notifyList = [];
-        notifyList.push(notify);
-        document.getElementById('addNotifySiteLbl').value = '';
-        document.getElementById('addNotifyTimeLbl').value = '';
-
-        updateNotificationList();
+        updateAllowedList();
 
         return true;
     } else return false;
 }
 
 function addNewSiteClickHandler(lblName, timeName, actionCheck, notifyBlock) {
-    var newSite = document.getElementById(lblName).value;
-    var newTime;
+    let newSite = document.getElementById(lblName).value;
+    let newTime;
     if (timeName != null)
         newTime = document.getElementById(timeName).value;
     if (newSite !== '' && (newTime === undefined || (newTime !== undefined && newTime !== ''))) {
@@ -384,15 +88,15 @@ function addNewSiteClickHandler(lblName, timeName, actionCheck, notifyBlock) {
 }
 
 function addDomainToListBox(domain) {
-    var li = document.createElement('li');
+    let li = document.createElement('li');
     li.innerText = domain.href || domain;
-    var del = document.createElement('img');
+    let del = document.createElement('img');
     del.height = 12;
     del.src = '/icons/delete.png';
     del.addEventListener('click', function (e) {
-        deleteWhiteSite(e);
+        deleteAllowedSite(e);
     });
-    document.getElementById('whiteList').appendChild(li).appendChild(del);
+    document.getElementById('allowedList').appendChild(li).appendChild(del);
 }
 
 function addDomainToEditableListBox(entity, elementId, actionEdit, actionDelete, actionUpdateTimeFromList, actionUpdateList) {
@@ -443,29 +147,11 @@ function addDomainToEditableListBox(entity, elementId, actionEdit, actionDelete,
     li.appendChild(hr);
 }
 
-function deleteWhiteSite(e) {
+function deleteAllowedSite(e) {
     var targetElement = e.path[1];
-    whiteList.splice(whiteList.indexOf(targetElement.innerText), 1);
-    document.getElementById('whiteList').removeChild(targetElement);
-    updateWhiteList();
-}
-
-function deleteRestrictionSite(e) {
-    var targetElement = e.path[1];
-    var itemValue = targetElement.querySelector("[name='domain']").value;
-    var item = restrictionList.find(x => x.url.isMatch(itemValue));
-    restrictionList.splice(restrictionList.indexOf(item), 1);
-    document.getElementById('restrictionsList').removeChild(targetElement);
-    updateRestrictionList();
-}
-
-function deleteNotificationSite(e) {
-    var targetElement = e.path[1];
-    var itemValue = targetElement.querySelector("[name='domain']").value;
-    var item = notifyList.find(x => x.url.isMatch(itemValue));
-    notifyList.splice(notifyList.indexOf(item), 1);
-    document.getElementById('notifyList').removeChild(targetElement);
-    updateNotificationList();
+    allowedList = allowedList.filter(allowedItem => allowedItem.href !== targetElement.innerText);
+    document.getElementById('allowedList').removeChild(targetElement);
+    updateAllowedList();
 }
 
 function actionEditSite(e, actionUpdateTimeFromList, actionUpdateList) {
@@ -497,38 +183,10 @@ function actionEditSite(e, actionUpdateTimeFromList, actionUpdateList) {
     }
 }
 
-function isContainsRestrictionSite(domain) {
-    return restrictionList.find(x => x.url.isMatch(domain)) != undefined;
+function isContainsAllowedSite(domain) {
+    return allowedList.find(x => x.isMatch(domain)) != undefined;
 }
 
-function isContainsNotificationSite(domain) {
-    return notifyList.find(x => x.url.isMatch(domain)) != undefined;
-}
-
-function isContainsWhiteSite(domain) {
-    return whiteList.find(x => x.isMatch(domain)) != undefined;
-}
-
-function updateItemFromRestrictionList(domain, time) {
-    restrictionList.find(x => x.url.isMatch(domain)).time = convertTimeToSummaryTime(time);
-}
-
-function updateItemFromNotifyList(domain, time) {
-    notifyList.find(x => x.url.isMatch(domain)).time = convertTimeToSummaryTime(time);
-}
-
-function updateWhiteList() {
-    storage.saveValue(STORAGE_WHITE_LIST, whiteList);
-}
-
-function updateRestrictionList() {
-    storage.saveValue(STORAGE_RESTRICTION_LIST, restrictionList);
-}
-
-function updateNotificationList() {
-    storage.saveValue(STORAGE_NOTIFICATION_LIST, notifyList);
-}
-
-function updateNotificationMessage() {
-    storage.saveValue(STORAGE_NOTIFICATION_MESSAGE, document.getElementById('notifyMessage').value);
+function updateAllowedList() {
+    storage.saveValue(STORAGE_ALLOWED_LIST, allowedList);
 }

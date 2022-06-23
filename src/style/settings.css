@@ -7,21 +7,22 @@ body {
 .content {
     width: 750px;
     margin: 10px auto;
-    display: grid;
-    grid-template-columns: 200px auto;
-    grid-column-gap: 40px;
-    grid-template-areas: 'h h' 'n m';
 }
 
-.title{
+.title {
     font-size: 23px;
     font-weight: 650;
 }
 
-.header{
+.header {
     grid-area: h;
     margin: 0 0 10px;
     font-size: 20px;
+    text-align: center;
+}
+
+.settings-block {
+    margin-top: 20px;
 }
 
 a {
@@ -181,7 +182,7 @@ input[type="button"]:hover {
     text-decoration: none;
   }
 
-  
+
   input[type="button"][disabled]{
     border: 1px solid #999999;
     background-color: #cccccc;
@@ -217,7 +218,7 @@ input[type="button"]:hover {
     position: relative;
     display: inline-block;
   }
-  
+
   /* Tooltip text */
   .tooltip .tooltiptext {
     visibility: hidden;
@@ -227,17 +228,17 @@ input[type="button"]:hover {
     text-align: center;
     padding: 5px;
     border-radius: 6px;
-  
+
     /* Position the tooltip text */
     position: absolute;
     z-index: 1;
     transform: translateX(-50%) translateY(-120%);
-  
+
     /* Fade in tooltip */
     opacity: 0;
     transition: opacity 0.3s;
   }
-  
+
   /* Show the tooltip text when you mouse over the tooltip container */
   .tooltip:hover .tooltiptext {
     visibility: visible;
@@ -248,45 +249,45 @@ input[type="button"]:hover {
       display: none !important;
   }
 
-  .notify{
-    width: 220px;
-    height: 27px;
-    margin: auto;
-    background-color: rgb(21, 104, 0);
-    color: rgb(255, 255, 255);
-    text-align: center;
-    font-weight: 600;
-    border-radius: 5px;
-    position: fixed;
-    z-index: 1;
-    top: 10px;
-    right: 20px;
-    font-size: 15px;
-    white-space: nowrap;
-    padding: 10px;
-  }
+    .notify {
+        width: 220px;
+        height: 27px;
+        margin: auto;
+        background-color: rgb(21, 104, 0);
+        color: rgb(255, 255, 255);
+        text-align: center;
+        font-weight: 600;
+        border-radius: 5px;
+        position: fixed;
+        z-index: 1;
+        top: 10px;
+        right: 20px;
+        font-size: 15px;
+        white-space: nowrap;
+        padding: 10px;
+    }
 
-  .listbox{
-      overflow-y: auto;
-      width: 350px;
-      height: 120px;
-      padding: 3px;
-      padding: 3px 5px 3px 5px;
-      border: 1px solid rgb(172, 169, 169);
-  }
+    .listbox {
+        overflow-y: auto;
+        width: 380px;
+        height: 160px;
+        padding: 3px;
+        padding: 3px 5px 3px 5px;
+        border: 1px solid rgb(172, 169, 169);
+    }
 
-  .listbox img{
-      float: right;
-      cursor: pointer;
-  }
+    .listbox img{
+        float: right;
+        cursor: pointer;
+    }
 
-  #addWhiteSiteLbl{
-      width: 321px;
-      height: 15px;
-      padding: 3px;
-  }
+    #addAllowedSiteLbl {
+        width: 351px;
+        height: 15px;
+        padding: 3px;
+    }
 
-  #addWhiteSiteBtn{
+  #addAllowedSiteBtn{
     height: 24px !important;
     line-height: 20px !important;
     padding: 0 5px !important;
@@ -330,6 +331,7 @@ input[type="button"]:hover {
 
 .block{
     display: block;
+    text-align: center;
 }
 
 .readonly-input{

@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Web Activity Time Tracker</title>
+    <title>Off-app Web Activity Time Tracker</title>
     <link href="style/webact.css" rel="stylesheet" />
     <link href="style/chart.css" rel="stylesheet" />
 </head>
@@ -25,7 +25,7 @@
       </filter>
    </svg>
     <div id="extensionTitle">
-        <span class="title">Web Activity Time Tracker</span>
+        <span class="title">Off-app Web Activity Time Tracker</span>
         <span id="userEmail"></span>
     </div>
     <div id="buttons" class="btn-block">
@@ -37,11 +37,8 @@
             <div id='closeHintBtn' class="close-hint">✖</div>
             <p class="title-block">You can:</p>
             <p><span class="arrow">➤</span> enable dark mode</p>
-            <p><span class="arrow">➤</span> set daily limits for sites</p>
-            <p><span class="arrow">➤</span> set notifications after a certain time has elapsed</p>
             <p><span class="arrow">➤</span> set a list of sites with no tracking</p>
-            <p><span class="arrow">➤</span> enable time tracking on youtube.com</p>
-            <p><span class="arrow">➤</span> enable time tracking on Netflix.com</p>
+            <p><span class="arrow">➤</span> add a new site to Allowed list of domains</p>
         </div>
     </div>
     <div id="stats" class="hide">
@@ -121,7 +118,6 @@
 <script src="scripts/storage.js"></script>
 <script src="scripts/common.js"></script>
 <script src="scripts/timeInterval.js"></script>
-<script src="scripts/restriction.js"></script>
 <script src="scripts/ui.js"></script>
 <script src="scripts/url.js"></script>
 <script src="scripts/initialAllowedList.js"></script>

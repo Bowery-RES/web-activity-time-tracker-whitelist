@@ -496,8 +496,8 @@ input[type='checkbox'] {
     padding: 5px 15px;
     position: absolute;
     z-index: 98;
-    width: 300px;
-    height: 190px;
+    width: 200px;
+    height: 120px;
 }
 
 .hint-for-settings::before {

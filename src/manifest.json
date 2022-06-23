@@ -6,7 +6,7 @@
         "version": "1.9.6",
         "minimum_chrome_version": "26",
 
-        "description": "Track and limit time your activity in the browser every day.",
+        "description": "Track time your activity in the browser every day and send data to Pendo",
 
         "options_page": "options.html",
 
@@ -31,8 +31,6 @@
             "geolocation"
         ],
         "optional_permissions": [
-            "https://www.youtube.com/*",
-            "https://www.netflix.com/*",
             "notifications"
         ],
         "offline_enabled": true,
@@ -46,14 +44,13 @@
                         "scripts/authHelper.js",
                         "scripts/error/authenticationError.js",
                         "scripts/url.js",
-                        "scripts/background.js",
-                        "scripts/restriction.js"
+                        "scripts/background.js"
                     ],
             "persistent": false
         },
         "browser_action": {
             "default_popup": "sign-in.html",
-            "default_title": "Web Activity Time Tracker",
+            "default_title": "Off-app Web Activity Time Tracker",
             "default_icon": "icons/48x48.png"
         }
 }
