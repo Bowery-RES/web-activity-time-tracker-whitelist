@@ -11,7 +11,7 @@ class Activity {
                     isDifferentUrl = true;
                 }
 
-                if (this.isNewUrl(url) && !this.isInBlackList(url)) {
+                if (this.isNewUrl(url) && !this.isInBlockedList(url)) {
                     let favicon = tab.favIconUrl;
                     if (favicon === undefined) {
                         favicon = 'chrome://favicon/' + url.host;
@@ -20,7 +20,7 @@ class Activity {
                     tabs.push(newTab);
                 }
 
-                if (isDifferentUrl && !this.isInBlackList(url)) {
+                if (isDifferentUrl && !this.isInBlockedList(url)) {
                     this.setCurrentActiveTab(url);
                     let tabUrl = this.getTab(url);
                     if (tabUrl !== undefined)
@@ -99,7 +99,7 @@ class Activity {
         }
     }
 
-    isInBlackList(domain) {
+    isInBlockedList(domain) {
         if (setting_allowed_list !== undefined &&
             setting_allowed_list.length > 0 &&
             setting_allowed_list.find(o => o.isMatch(domain)) !== undefined) {

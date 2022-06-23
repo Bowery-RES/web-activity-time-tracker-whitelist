@@ -178,7 +178,7 @@ function getTabsFromStorage(tabs) {
         return;
     }
 
-    var counterOfSite;
+    var siteCount;
     if (currentTypeOfList === TypeListEnum.All) {
         targetTabs = tabs;
         if (targetTabs.length > 0) {
@@ -189,13 +189,13 @@ function getTabsFromStorage(tabs) {
             return;
         }
 
-        counterOfSite = tabs.length;
+        siteCount = tabs.length;
     }
     if (currentTypeOfList === TypeListEnum.ToDay) {
         targetTabs = tabs.filter((x) =>
             x.days.find((s) => s.date === todayLocalDate())
         );
-        counterOfSite = targetTabs.length;
+        siteCount = targetTabs.length;
         if (targetTabs.length > 0) {
             targetTabs = targetTabs.sort(function (a, b) {
             return (
@@ -215,12 +215,12 @@ function getTabsFromStorage(tabs) {
     if (currentTypeOfList === TypeListEnum.All)
         ui.addTableHeader(
             currentTypeOfList,
-            counterOfSite,
+            siteCount,
             totalTime,
             getFirstDay()
         );
         if (currentTypeOfList === TypeListEnum.ToDay)
-        ui.addTableHeader(currentTypeOfList, counterOfSite, totalTime);
+        ui.addTableHeader(currentTypeOfList, siteCount, totalTime);
 
     var currentTab = getCurrentTab();
 

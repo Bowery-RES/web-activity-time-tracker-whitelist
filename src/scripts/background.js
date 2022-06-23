@@ -35,7 +35,7 @@ function backgroundCheck() {
                     activity.addTab(activeTab);
                 }
 
-                if (activity.isInBlackList(activeUrl)) {
+                if (activity.isInBlockedList(activeUrl)) {
                     chrome.browserAction.setBadgeBackgroundColor({ color: '#FF0000' })
                     chrome.browserAction.setBadgeText({
                         tabId: activeTab.id,
@@ -59,7 +59,7 @@ function backgroundCheck() {
 }
 
 function mainTRacker(activeUrl, tab, activeTab) {
-    if (!activity.isInBlackList(activeUrl)) {
+    if (!activity.isInBlockedList(activeUrl)) {
         tab.incSummaryTime();
     }
     if (setting_view_in_badge === true) {

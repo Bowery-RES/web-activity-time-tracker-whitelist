@@ -136,7 +136,7 @@ class UI {
         barChart(days);
     }
 
-    addTableHeader(currentTypeOfList, counterOfSite, totalTime, totalDays) {
+    addTableHeader(currentTypeOfList, siteCount, totalTime, totalDays) {
         function fillSummaryTime(totalTime){
             let arrayTime = getArrayTime(totalTime);
             let stringTime = '';
@@ -149,12 +149,12 @@ class UI {
         var p = document.createElement('p');
         p.classList.add('table-header');
         if (currentTypeOfList === TypeListEnum.ToDay)
-            p.innerHTML = 'Today (' + counterOfSite + ' sites) <br> <strong>' + convertShortSummaryTimeToLongString(totalTime) + '</strong>';
+            p.innerHTML = 'Today (' + siteCount + ' sites) <br> <strong>' + convertShortSummaryTimeToLongString(totalTime) + '</strong>';
         if (currentTypeOfList === TypeListEnum.All && totalDays !== undefined) {
             if (totalDays.countOfDays > 0) {
-                p.innerHTML = 'Aggregate data since ' + new Date(totalDays.minDate).toLocaleDateString() + ' (' + totalDays.countOfDays + ' days) (' + counterOfSite + ' sites) <br> <strong>' + fillSummaryTime(totalTime)  + '</strong>';
+                p.innerHTML = 'Aggregate data since ' + new Date(totalDays.minDate).toLocaleDateString() + ' (' + totalDays.countOfDays + ' days) (' + siteCount + ' sites) <br> <strong>' + fillSummaryTime(totalTime)  + '</strong>';
             } else {
-                p.innerHTML = 'Aggregate data since ' + new Date().toLocaleDateString() + ' (' + counterOfSite + ' sites) <br>  <strong>' + convertShortSummaryTimeToLongString(totalTime)  + '</strong>';
+                p.innerHTML = 'Aggregate data since ' + new Date().toLocaleDateString() + ' (' + siteCount + ' sites) <br>  <strong>' + convertShortSummaryTimeToLongString(totalTime)  + '</strong>';
             }
         }
 
